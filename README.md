@@ -7,7 +7,7 @@ The home page calls auth-service health and displays the result.
 
 - `NEXT_PUBLIC_AUTH_BASE_URL`: Base URL for auth-service.
   - Local example: `http://localhost:8001`
-  - Docker Compose network example: `http://auth-service:8001`
+  - Docker Compose network example: `http://auth-service:8000`
 
 Example env file:
 
