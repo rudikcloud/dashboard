@@ -1,34 +1,96 @@
-type HealthResponse = {
-  status?: string;
-};
+"use client";
 
-export const dynamic = "force-dynamic";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
-async function getAuthHealth(): Promise<string> {
-  const authBaseUrl =
-    process.env.NEXT_PUBLIC_AUTH_BASE_URL ?? "http://localhost:8001";
+import { authRequest, type User } from "../lib/auth-client";
 
-  try {
-    const response = await fetch(`${authBaseUrl}/health`, { cache: "no-store" });
+export default function Home() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    if (!response.ok) {
-      return `error (${response.status})`;
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCurrentUser = async () => {
+      try {
+        const user = await authRequest<User>("/me");
+        if (isMounted) {
+          setCurrentUser(user);
+          setError(null);
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentUser(null);
+          setError(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCurrentUser();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await authRequest<{ status: string }>("/auth/logout", { method: "POST" });
+      setCurrentUser(null);
+      setError(null);
+    } catch (logoutError) {
+      const message =
+        logoutError instanceof Error ? logoutError.message : "Logout failed";
+      setError(message);
+    } finally {
+      setIsLoggingOut(false);
     }
-
-    const payload = (await response.json()) as HealthResponse;
-    return payload.status ?? "unknown";
-  } catch {
-    return "unreachable";
-  }
-}
-
-export default async function Home() {
-  const authHealth = await getAuthHealth();
+  };
 
   return (
     <main className="page">
       <h1>RudikCloud Dashboard</h1>
-      <p>Auth health: {authHealth}</p>
+
+      {loading ? <p>Loading session...</p> : null}
+
+      {!loading && currentUser ? (
+        <section className="card">
+          <p>
+            Logged in as <strong>{currentUser.email}</strong>
+          </p>
+          <button
+            type="button"
+            className="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? "Logging out..." : "Logout"}
+          </button>
+        </section>
+      ) : null}
+
+      {!loading && !currentUser ? (
+        <section className="card">
+          <p>You are not logged in.</p>
+          <div className="actions">
+            <Link href="/login" className="button">
+              Login
+            </Link>
+            <Link href="/register" className="button button-secondary">
+              Register
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {error ? <p className="error">{error}</p> : null}
     </main>
   );
 }
