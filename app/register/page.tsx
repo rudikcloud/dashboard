@@ -70,6 +70,9 @@ export default function RegisterPage() {
         Already have an account? <Link href="/login">Login</Link>
       </p>
       <p>
+        <Link href="/orders">Orders</Link>
+      </p>
+      <p>
         <Link href="/">Back to Home</Link>
       </p>
     </main>

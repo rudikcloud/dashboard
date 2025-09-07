@@ -71,6 +71,9 @@ export default function LoginPage() {
         Need an account? <Link href="/register">Register</Link>
       </p>
       <p>
+        <Link href="/orders">Orders</Link>
+      </p>
+      <p>
         <Link href="/">Back to Home</Link>
       </p>
     </main>

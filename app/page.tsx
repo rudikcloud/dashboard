@@ -65,6 +65,11 @@ export default function Home() {
           <p>
             Logged in as <strong>{currentUser.email}</strong>
           </p>
+          <div className="actions">
+            <Link href="/orders" className="button button-secondary">
+              Orders
+            </Link>
+          </div>
           <button
             type="button"
             className="button"
