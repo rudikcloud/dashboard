@@ -25,3 +25,25 @@ export async function GET(request: NextRequest) {
     },
   });
 }
+
+export async function POST(request: NextRequest) {
+  const payload = await request.text();
+  const upstream = await fetch(buildOrdersUrl("/orders"), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      cookie: request.headers.get("cookie") ?? "",
+    },
+    body: payload,
+    cache: "no-store",
+  });
+
+  const body = await upstream.text();
+  return new NextResponse(body, {
+    status: upstream.status,
+    headers: {
+      "content-type":
+        upstream.headers.get("content-type") ?? "application/json",
+    },
+  });
+}

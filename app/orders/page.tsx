@@ -1,50 +1,110 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
-import { listOrders, type Order } from "../../lib/orders-client";
+import { createOrder, listOrders, type Order } from "../../lib/orders-client";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [itemName, setItemName] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [creating, setCreating] = useState(false);
+
+  const loadOrders = useCallback(async () => {
+    try {
+      const result = await listOrders();
+      setOrders(result);
+      setError(null);
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to load orders";
+      setError(message);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadOrders = async () => {
-      try {
-        const result = await listOrders();
-        if (isMounted) {
-          setOrders(result);
-          setError(null);
-        }
-      } catch (requestError) {
-        if (isMounted) {
-          const message =
-            requestError instanceof Error
-              ? requestError.message
-              : "Failed to load orders";
-          setError(message);
-          setOrders([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadOrders();
+    if (isMounted) {
+      loadOrders();
+    }
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadOrders]);
+
+  const handleCreateOrder = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const normalizedItemName = itemName.trim();
+    const parsedQuantity = Number(quantity);
+    if (!normalizedItemName || Number.isNaN(parsedQuantity) || parsedQuantity < 1) {
+      setError("Please provide a valid item name and quantity.");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      await createOrder({
+        item_name: normalizedItemName,
+        quantity: parsedQuantity,
+      });
+      setItemName("");
+      setQuantity("1");
+      await loadOrders();
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to create order";
+      setError(message);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <main className="page">
       <h1>Orders</h1>
+
+      <section className="card">
+        <h2>Create Order</h2>
+        <form className="form" onSubmit={handleCreateOrder}>
+          <label className="field">
+            <span>Item name</span>
+            <input
+              type="text"
+              value={itemName}
+              onChange={(event) => setItemName(event.target.value)}
+              required
+              minLength={1}
+            />
+          </label>
+
+          <label className="field">
+            <span>Quantity</span>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+              required
+              min={1}
+            />
+          </label>
+
+          <button type="submit" className="button" disabled={creating}>
+            {creating ? "Creating..." : "Create order"}
+          </button>
+        </form>
+      </section>
 
       {loading ? <p>Loading orders...</p> : null}
       {error ? <p className="error">{error}</p> : null}

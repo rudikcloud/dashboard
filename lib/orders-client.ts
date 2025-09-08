@@ -7,32 +7,43 @@ export type Order = {
   updated_at: string;
 };
 
-export async function listOrders(): Promise<Order[]> {
-  const response = await fetch("/api/orders", {
-    method: "GET",
-    credentials: "include",
-  });
-
+async function parseResponse(response: Response): Promise<unknown> {
   const text = await response.text();
-  let payload: unknown = [];
+  let payload: unknown = null;
 
   if (text) {
     try {
       payload = JSON.parse(text) as unknown;
     } catch {
-      payload = [];
+      payload = null;
     }
   }
 
+  return payload;
+}
+
+function getErrorMessage(payload: unknown, status: number): string {
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "detail" in payload &&
+    typeof (payload as { detail?: unknown }).detail === "string"
+  ) {
+    return (payload as { detail: string }).detail;
+  }
+
+  return `Request failed (${status})`;
+}
+
+export async function listOrders(): Promise<Order[]> {
+  const response = await fetch("/api/orders", {
+    method: "GET",
+    credentials: "include",
+  });
+  const payload = await parseResponse(response);
+
   if (!response.ok) {
-    const detail =
-      typeof payload === "object" &&
-      payload !== null &&
-      "detail" in payload &&
-      typeof (payload as { detail?: unknown }).detail === "string"
-        ? (payload as { detail: string }).detail
-        : `Request failed (${response.status})`;
-    throw new Error(detail);
+    throw new Error(getErrorMessage(payload, response.status));
   }
 
   if (!Array.isArray(payload)) {
@@ -40,4 +51,29 @@ export async function listOrders(): Promise<Order[]> {
   }
 
   return payload as Order[];
+}
+
+export async function createOrder(input: {
+  item_name: string;
+  quantity: number;
+}): Promise<Order> {
+  const response = await fetch("/api/orders", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+  const payload = await parseResponse(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, response.status));
+  }
+
+  if (typeof payload !== "object" || payload === null) {
+    throw new Error("Invalid create order response");
+  }
+
+  return payload as Order;
 }
