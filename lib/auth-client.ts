@@ -5,8 +5,31 @@ export type User = {
   updated_at: string;
 };
 
-const AUTH_BASE_URL =
-  process.env.NEXT_PUBLIC_AUTH_BASE_URL ?? "http://localhost:8001";
+function resolveAuthBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_AUTH_BASE_URL ?? "http://localhost:8001";
+
+  if (typeof window === "undefined") {
+    return configured;
+  }
+
+  try {
+    const parsed = new URL(configured);
+    const isLocalConfiguredHost =
+      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+
+    // In local dev, keep auth host aligned with the dashboard host to preserve cookie scope.
+    if (isLocalConfiguredHost) {
+      parsed.hostname = window.location.hostname;
+      return parsed.origin;
+    }
+  } catch {
+    return configured;
+  }
+
+  return configured;
+}
+
+const AUTH_BASE_URL = resolveAuthBaseUrl();
 
 type AuthRequestOptions = {
   method?: string;
