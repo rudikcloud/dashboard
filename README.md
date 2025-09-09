@@ -7,6 +7,9 @@
 - `NEXT_PUBLIC_AUTH_BASE_URL`: Base URL for auth-service.
   - Local example: `http://localhost:8001`
   - Docker Compose example: `http://localhost:8001`
+- `ORDERS_SERVICE_URL`: Server-side base URL used by dashboard API proxy for orders-service.
+  - Local `npm run dev` example: `http://localhost:8002`
+  - Docker Compose default: `http://orders-service:8002` (when env var is unset)
 
 Example env file:
 
@@ -48,6 +51,9 @@ docker run --rm -p 3000:3000 --env-file .env.example dashboard
   - Not logged in -> shows links to Login/Register.
 - `/login`: email/password form calling `POST /auth/login`.
 - `/register`: email/password form calling `POST /auth/register`.
+- `/orders`: shows current user's orders and allows creating a new order.
+  - Browser calls dashboard `GET /api/orders` and `POST /api/orders` with `credentials: "include"`.
+  - Dashboard forwards the session cookie to orders-service `GET /orders` and `POST /orders`.
 
 ## Cookie/session behavior
 
