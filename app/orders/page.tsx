@@ -128,6 +128,9 @@ export default function OrdersPage() {
       ) : null}
 
       <p>
+        <Link href="/flags">Manage Flags</Link>
+      </p>
+      <p>
         <Link href="/">Back to Home</Link>
       </p>
     </main>

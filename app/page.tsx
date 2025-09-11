@@ -69,6 +69,9 @@ export default function Home() {
             <Link href="/orders" className="button button-secondary">
               Orders
             </Link>
+            <Link href="/flags" className="button button-secondary">
+              Flags
+            </Link>
           </div>
           <button
             type="button"
