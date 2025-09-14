@@ -10,6 +10,9 @@
 - `ORDERS_SERVICE_URL`: Server-side base URL used by dashboard API proxy for orders-service.
   - Local `npm run dev` example: `http://localhost:8002`
   - Docker Compose default: `http://orders-service:8002` (when env var is unset)
+- `FLAGS_SERVICE_URL`: Server-side base URL used by dashboard API proxy for flags-service.
+  - Local `npm run dev` example: `http://localhost:8003`
+  - Docker Compose default: `http://flags-service:8000` (when env var is unset)
 
 Example env file:
 
@@ -54,6 +57,11 @@ docker run --rm -p 3000:3000 --env-file .env.example dashboard
 - `/orders`: shows current user's orders and allows creating a new order.
   - Browser calls dashboard `GET /api/orders` and `POST /api/orders` with `credentials: "include"`.
   - Dashboard forwards the session cookie to orders-service `GET /orders` and `POST /orders`.
+  - Orders table shows `checkout_variant` returned by orders-service.
+- `/flags`: simple feature flag management UI for `dev` environment.
+  - Create flag and edit `enabled`, `rollout_percent`, `allowlist`.
+  - Browser calls dashboard `GET/POST /api/flags` and `PUT /api/flags/{key}` with `credentials: "include"`.
+  - Dashboard forwards the session cookie to flags-service endpoints.
 
 ## Cookie/session behavior
 
