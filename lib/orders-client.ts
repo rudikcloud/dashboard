@@ -3,6 +3,7 @@ export type Order = {
   user_id: string;
   item_name: string;
   quantity: number;
+  checkout_variant: string;
   created_at: string;
   updated_at: string;
 };

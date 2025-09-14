@@ -116,13 +116,24 @@ export default function OrdersPage() {
           {orders.length === 0 ? (
             <p>No orders yet.</p>
           ) : (
-            <ul>
-              {orders.map((order) => (
-                <li key={order.id}>
-                  {order.item_name} x{order.quantity}
-                </li>
-              ))}
-            </ul>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Quantity</th>
+                  <th>Checkout Variant</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    <td>{order.item_name}</td>
+                    <td>{order.quantity}</td>
+                    <td>{order.checkout_variant}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </section>
       ) : null}

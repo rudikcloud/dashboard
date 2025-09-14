@@ -99,3 +99,19 @@ input:focus {
 .error {
   color: #b42318;
 }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  border: 1px solid #d9e1eb;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.table th {
+  background: #f3f7fd;
+}
