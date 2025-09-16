@@ -4,6 +4,10 @@ export type Order = {
   item_name: string;
   quantity: number;
   checkout_variant: string;
+  notification_status: "pending" | "retrying" | "sent" | "failed" | string;
+  notification_attempts: number;
+  notification_last_error: string | null;
+  notification_last_attempt_at: string | null;
   created_at: string;
   updated_at: string;
 };

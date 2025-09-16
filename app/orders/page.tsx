@@ -122,6 +122,10 @@ export default function OrdersPage() {
                   <th>Item</th>
                   <th>Quantity</th>
                   <th>Checkout Variant</th>
+                  <th>Notification Status</th>
+                  <th>Attempts</th>
+                  <th>Last Attempt</th>
+                  <th>Last Error</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,6 +134,10 @@ export default function OrdersPage() {
                     <td>{order.item_name}</td>
                     <td>{order.quantity}</td>
                     <td>{order.checkout_variant}</td>
+                    <td>{order.notification_status}</td>
+                    <td>{order.notification_attempts}</td>
+                    <td>{order.notification_last_attempt_at ?? "-"}</td>
+                    <td>{order.notification_last_error ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>
