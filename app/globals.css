@@ -115,3 +115,40 @@ input:focus {
 .table th {
   background: #f3f7fd;
 }
+
+.status-badge {
+  display: inline-block;
+  min-width: 78px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.status-pending {
+  color: #694104;
+  background: #fde68a;
+}
+
+.status-retrying {
+  color: #1e3a8a;
+  background: #bfdbfe;
+}
+
+.status-sent {
+  color: #14532d;
+  background: #bbf7d0;
+}
+
+.status-failed {
+  color: #7f1d1d;
+  background: #fecaca;
+}
+
+.status-unknown {
+  color: #334155;
+  background: #e2e8f0;
+}

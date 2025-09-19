@@ -5,6 +5,20 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 
 import { createOrder, listOrders, type Order } from "../../lib/orders-client";
 
+function getStatusBadgeClass(status: string): string {
+  if (status === "sent") return "status-badge status-sent";
+  if (status === "failed") return "status-badge status-failed";
+  if (status === "retrying") return "status-badge status-retrying";
+  if (status === "pending") return "status-badge status-pending";
+  return "status-badge status-unknown";
+}
+
+function formatLastError(error: string | null): string {
+  if (!error) return "-";
+  if (error.length <= 60) return error;
+  return `${error.slice(0, 57)}...`;
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,8 +120,23 @@ export default function OrdersPage() {
         </form>
       </section>
 
-      {loading ? <p>Loading orders...</p> : null}
-      {error ? <p className="error">{error}</p> : null}
+      {loading ? (
+        <section className="card">
+          <p>Loading orders...</p>
+        </section>
+      ) : null}
+      {error ? (
+        <section className="card">
+          <p className="error">{error}</p>
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => void loadOrders()}
+          >
+            Retry loading orders
+          </button>
+        </section>
+      ) : null}
 
       {!loading && !error ? (
         <section className="card">
@@ -134,10 +163,16 @@ export default function OrdersPage() {
                     <td>{order.item_name}</td>
                     <td>{order.quantity}</td>
                     <td>{order.checkout_variant}</td>
-                    <td>{order.notification_status}</td>
+                    <td>
+                      <span className={getStatusBadgeClass(order.notification_status)}>
+                        {order.notification_status}
+                      </span>
+                    </td>
                     <td>{order.notification_attempts}</td>
                     <td>{order.notification_last_attempt_at ?? "-"}</td>
-                    <td>{order.notification_last_error ?? "-"}</td>
+                    <td title={order.notification_last_error ?? undefined}>
+                      {formatLastError(order.notification_last_error)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
