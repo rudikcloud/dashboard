@@ -82,3 +82,24 @@ export async function createOrder(input: {
 
   return payload as Order;
 }
+
+export async function retryOrderNotification(orderId: string): Promise<Order> {
+  const response = await fetch(
+    `/api/orders/${encodeURIComponent(orderId)}/retry-notification`,
+    {
+      method: "POST",
+      credentials: "include",
+    },
+  );
+  const payload = await parseResponse(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, response.status));
+  }
+
+  if (typeof payload !== "object" || payload === null) {
+    throw new Error("Invalid retry order response");
+  }
+
+  return payload as Order;
+}

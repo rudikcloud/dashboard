@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
-import { createOrder, listOrders, type Order } from "../../lib/orders-client";
+import {
+  createOrder,
+  listOrders,
+  retryOrderNotification,
+  type Order,
+} from "../../lib/orders-client";
 
 function getStatusBadgeClass(status: string): string {
   if (status === "sent") return "status-badge status-sent";
@@ -26,6 +31,7 @@ export default function OrdersPage() {
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [creating, setCreating] = useState(false);
+  const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -82,6 +88,22 @@ export default function OrdersPage() {
       setError(message);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleRetryNotification = async (orderId: string) => {
+    setRetryingOrderId(orderId);
+    try {
+      await retryOrderNotification(orderId);
+      await loadOrders();
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to retry notification";
+      setError(message);
+    } finally {
+      setRetryingOrderId(null);
     }
   };
 
@@ -155,6 +177,7 @@ export default function OrdersPage() {
                   <th>Attempts</th>
                   <th>Last Attempt</th>
                   <th>Last Error</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,6 +195,20 @@ export default function OrdersPage() {
                     <td>{order.notification_last_attempt_at ?? "-"}</td>
                     <td title={order.notification_last_error ?? undefined}>
                       {formatLastError(order.notification_last_error)}
+                    </td>
+                    <td>
+                      {order.notification_status === "failed" ? (
+                        <button
+                          type="button"
+                          className="button button-secondary"
+                          onClick={() => void handleRetryNotification(order.id)}
+                          disabled={retryingOrderId === order.id}
+                        >
+                          {retryingOrderId === order.id ? "Retrying..." : "Retry"}
+                        </button>
+                      ) : (
+                        "-"
+                      )}
                     </td>
                   </tr>
                 ))}
