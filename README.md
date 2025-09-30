@@ -57,7 +57,9 @@ docker run --rm -p 3000:3000 --env-file .env.example dashboard
 - `/orders`: shows current user's orders and allows creating a new order.
   - Browser calls dashboard `GET /api/orders` and `POST /api/orders` with `credentials: "include"`.
   - Dashboard forwards the session cookie to orders-service `GET /orders` and `POST /orders`.
-  - Orders table shows `checkout_variant` returned by orders-service.
+  - Orders table shows `checkout_variant` and notification fields (`notification_status`, `notification_attempts`, `notification_last_attempt_at`, `notification_last_error`) returned by orders-service.
+  - Notification status is highlighted with badges (`pending`, `retrying`, `sent`, `failed`).
+  - Failed rows show a `Retry` action that calls dashboard `POST /api/orders/{id}/retry-notification`, which forwards to orders-service.
 - `/flags`: simple feature flag management UI for `dev` environment.
   - Create flag and edit `enabled`, `rollout_percent`, `allowlist`.
   - Browser calls dashboard `GET/POST /api/flags` and `PUT /api/flags/{key}` with `credentials: "include"`.
