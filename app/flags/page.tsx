@@ -119,7 +119,13 @@ export default function FlagsPage() {
         requestError instanceof Error
           ? requestError.message
           : "Failed to create flag";
-      setError(message);
+      if (message.toLowerCase().includes("already exists")) {
+        setError(
+          "This flag already exists in this environment. Update it below and click Save changes.",
+        );
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }
