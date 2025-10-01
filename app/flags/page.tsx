@@ -321,6 +321,9 @@ export default function FlagsPage() {
         <Link href="/orders">Go to Orders</Link>
       </p>
       <p>
+        <Link href="/audit">View Audit Logs</Link>
+      </p>
+      <p>
         <Link href="/">Back to Home</Link>
       </p>
     </main>

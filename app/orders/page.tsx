@@ -222,6 +222,9 @@ export default function OrdersPage() {
         <Link href="/flags">Manage Flags</Link>
       </p>
       <p>
+        <Link href="/audit">View Audit Logs</Link>
+      </p>
+      <p>
         <Link href="/">Back to Home</Link>
       </p>
     </main>

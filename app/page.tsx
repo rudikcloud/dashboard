@@ -72,6 +72,9 @@ export default function Home() {
             <Link href="/flags" className="button button-secondary">
               Flags
             </Link>
+            <Link href="/audit" className="button button-secondary">
+              Audit
+            </Link>
           </div>
           <button
             type="button"

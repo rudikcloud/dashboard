@@ -77,6 +77,9 @@ export default function LoginPage() {
         <Link href="/orders">Orders</Link>
       </p>
       <p>
+        <Link href="/audit">Audit</Link>
+      </p>
+      <p>
         <Link href="/">Back to Home</Link>
       </p>
     </main>
