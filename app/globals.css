@@ -152,3 +152,16 @@ input:focus {
   color: #334155;
   background: #e2e8f0;
 }
+
+.json-block {
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d9e1eb;
+  background: #f3f7fd;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

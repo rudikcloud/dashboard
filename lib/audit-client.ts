@@ -38,6 +38,20 @@ function getErrorMessage(payload: unknown, status: number): string {
   return `Request failed (${status})`;
 }
 
+async function fetchAudit(path: string): Promise<unknown> {
+  const response = await fetch(path, {
+    method: "GET",
+    cache: "no-store",
+  });
+  const payload = await parseResponse(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, response.status));
+  }
+
+  return payload;
+}
+
 export async function listAuditEvents(filters: {
   actionType?: string;
   resourceType?: string;
@@ -55,17 +69,17 @@ export async function listAuditEvents(filters: {
   if (typeof filters.offset === "number") params.set("offset", String(filters.offset));
 
   const suffix = params.toString() ? `?${params.toString()}` : "";
-  const response = await fetch(`/api/audit/events${suffix}`, {
-    method: "GET",
-    cache: "no-store",
-  });
-  const payload = await parseResponse(response);
-
-  if (!response.ok) {
-    throw new Error(getErrorMessage(payload, response.status));
-  }
+  const payload = await fetchAudit(`/api/audit/events${suffix}`);
   if (!Array.isArray(payload)) {
     return [];
   }
   return payload as AuditEvent[];
+}
+
+export async function getAuditEvent(id: string): Promise<AuditEvent> {
+  const payload = await fetchAudit(`/api/audit/events/${encodeURIComponent(id)}`);
+  if (typeof payload !== "object" || payload === null) {
+    throw new Error("Invalid audit event response");
+  }
+  return payload as AuditEvent;
 }

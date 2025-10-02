@@ -117,7 +117,7 @@ export default function AuditPage() {
                   <th>Action</th>
                   <th>Resource</th>
                   <th>Actor</th>
-                  <th>ID</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,7 +130,9 @@ export default function AuditPage() {
                       {auditEvent.resource_id ? `:${auditEvent.resource_id}` : ""}
                     </td>
                     <td>{auditEvent.actor_user_id}</td>
-                    <td>{auditEvent.id}</td>
+                    <td>
+                      <Link href={`/audit/${auditEvent.id}`}>View</Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
