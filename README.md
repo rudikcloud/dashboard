@@ -13,6 +13,11 @@
 - `FLAGS_SERVICE_URL`: Server-side base URL used by dashboard API proxy for flags-service.
   - Local `npm run dev` example: `http://localhost:8003`
   - Docker Compose default: `http://flags-service:8000` (when env var is unset)
+- `AUDIT_SERVICE_URL`: Server-side base URL used by dashboard API proxy for audit-service-java.
+  - Local `npm run dev` example: `http://localhost:8004`
+  - Docker Compose default: `http://audit-service-java:8000` (when env var is unset)
+- `AUDIT_INGEST_TOKEN`: Shared internal token sent by dashboard API proxy as `X-Internal-Token` when requesting audit-service-java.
+  - Local/Docker default used in examples: `dev-audit-token`
 
 Example env file:
 
@@ -64,6 +69,11 @@ docker run --rm -p 3000:3000 --env-file .env.example dashboard
   - Create flag and edit `enabled`, `rollout_percent`, `allowlist`.
   - Browser calls dashboard `GET/POST /api/flags` and `PUT /api/flags/{key}` with `credentials: "include"`.
   - Dashboard forwards the session cookie to flags-service endpoints.
+  - If a flag key already exists in the same environment, UI now shows a friendly update message.
+- `/audit`: audit log search page.
+  - Supports action/resource/date filters.
+  - Browser calls dashboard `GET /api/audit/events`; dashboard proxies to audit-service-java with `X-Internal-Token`.
+  - Event rows link to `/audit/{id}` detail page showing `before_json`, `after_json`, and `metadata_json`.
 
 ## Cookie/session behavior
 
