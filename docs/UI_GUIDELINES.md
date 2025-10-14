@@ -148,3 +148,18 @@ Every major page starts with `PageHeader`:
 - Table containers horizontally scroll without breaking layout.
 - Forms become single-column on narrow widths.
 - Page actions wrap safely under title on mobile.
+
+## 21st.dev Component Intake Checklist
+
+When adopting a block from 21st.dev, complete this checklist before merging.
+
+- [ ] Keep only the structural idea; remove unrelated styling defaults.
+- [ ] Replace imported icon sets with `lucide-react` icons used in the dashboard.
+- [ ] Convert all colors, radius, shadows, spacing, and typography to dashboard tokens.
+- [ ] Wrap raw layout in existing primitives (`PageHeader`, `DataTableShell`, `EmptyState`, etc.) where applicable.
+- [ ] Ensure keyboard navigation and visible focus states are preserved.
+- [ ] Validate loading, empty, and error behavior (no “happy path only” blocks).
+- [ ] Remove dead code, sample/mock data, and framework-specific boilerplate not used here.
+- [ ] Confirm responsive behavior matches AppShell breakpoints.
+- [ ] Verify visual fit beside existing pages (Orders, Flags, Audit) at desktop and mobile widths.
+- [ ] Add a short note in block docs describing: source inspiration, normalization choices, and integration points.
