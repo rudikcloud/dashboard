@@ -266,6 +266,44 @@ a:focus-visible {
   gap: var(--space-6);
 }
 
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.page-header__content {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.page-header__title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.page-header__description {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--text-muted);
+}
+
+.page-header__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
 .card {
   border: 1px solid var(--border-default);
   background: var(--bg-surface);
@@ -426,6 +464,76 @@ textarea {
 .error {
   color: #a11d28;
   font-weight: 600;
+}
+
+.state-card {
+  border: 1px solid var(--border-default);
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.state-card h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.state-card p {
+  margin: 0;
+}
+
+.state-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.state-card__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.state-card-empty {
+  place-items: center;
+  text-align: center;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.state-card-error {
+  border-color: #f2c4c8;
+  background: #fff8f8;
+}
+
+.skeleton-lines {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #edf2fb 10%, #dfe7f6 50%, #edf2fb 90%);
+  background-size: 220% 100%;
+  animation: shimmer 1.35s infinite linear;
+}
+
+.skeleton-line:nth-child(2n) {
+  width: 82%;
+}
+
+.skeleton-line:nth-child(3n) {
+  width: 68%;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }
 
 .status-badge {
@@ -626,5 +734,24 @@ textarea {
 
   .user-menu__text {
     max-width: 110px;
+  }
+
+  .page-header {
+    display: grid;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: -220% 0%;
   }
 }
