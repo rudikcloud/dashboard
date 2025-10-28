@@ -461,6 +461,64 @@ textarea {
   background: #f9fbff;
 }
 
+.data-table-shell {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.data-table-shell__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.data-table-shell__title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.data-table-shell__controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.data-table-shell__search input {
+  min-width: 220px;
+}
+
+.data-table-shell__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.data-table-shell__table-wrap {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  background: #fff;
+}
+
+.data-table-shell__table-wrap .table th:first-child,
+.data-table-shell__table-wrap .table td:first-child {
+  padding-left: var(--space-5);
+}
+
+.data-table-shell__table-wrap .table th:last-child,
+.data-table-shell__table-wrap .table td:last-child {
+  padding-right: var(--space-5);
+}
+
+.data-table-shell__pagination {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .error {
   color: #a11d28;
   font-weight: 600;
@@ -583,6 +641,17 @@ textarea {
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .user-menu {
@@ -738,6 +807,15 @@ textarea {
 
   .page-header {
     display: grid;
+  }
+
+  .data-table-shell__header {
+    display: grid;
+  }
+
+  .data-table-shell__search input {
+    min-width: 0;
+    width: 100%;
   }
 }
 
