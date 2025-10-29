@@ -312,6 +312,65 @@ a:focus-visible {
   padding: var(--space-5);
 }
 
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: #fff;
+  min-height: 30px;
+  padding: 0 var(--space-3);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.overview-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.overview-card {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.overview-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.overview-card__header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.health-indicator {
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.health-healthy {
+  color: var(--state-success-fg);
+  background: var(--state-success-bg);
+}
+
+.health-requires_auth {
+  color: var(--state-warning-fg);
+  background: var(--state-warning-bg);
+}
+
+.health-offline {
+  color: var(--state-danger-fg);
+  background: var(--state-danger-bg);
+}
+
 h1,
 h2,
 h3,

@@ -1,107 +1,201 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { authRequest, type User } from "../lib/auth-client";
+import { PageHeader } from "../components/ui/page-header";
+import { ErrorState, LoadingSkeleton } from "../components/ui/states";
+
+type ServiceProbe = {
+  name: string;
+  status: "healthy" | "requires_auth" | "offline";
+  detail: string;
+};
+
+async function probeService(url: string): Promise<ServiceProbe["status"]> {
+  try {
+    const response = await fetch(url, {
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    if (response.ok) {
+      return "healthy";
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return "requires_auth";
+    }
+
+    return "offline";
+  } catch {
+    return "offline";
+  }
+}
+
+function statusLabel(status: ServiceProbe["status"]): string {
+  if (status === "healthy") return "Healthy";
+  if (status === "requires_auth") return "Auth Required";
+  return "Unavailable";
+}
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [services, setServices] = useState<ServiceProbe[]>([]);
 
   useEffect(() => {
-    let isMounted = true;
+    let active = true;
 
-    const loadCurrentUser = async () => {
+    const load = async () => {
+      setLoading(true);
       try {
-        const user = await authRequest<User>("/me");
-        if (isMounted) {
-          setCurrentUser(user);
-          setError(null);
+        let user: User | null = null;
+        try {
+          user = await authRequest<User>("/me");
+        } catch {
+          user = null;
         }
-      } catch {
-        if (isMounted) {
-          setCurrentUser(null);
-          setError(null);
-        }
+
+        const [authStatus, ordersStatus, flagsStatus, auditStatus] =
+          await Promise.all([
+            probeService(`${process.env.NEXT_PUBLIC_AUTH_BASE_URL ?? "http://localhost:8001"}/health`),
+            probeService("/api/orders"),
+            probeService("/api/flags?environment=dev"),
+            probeService("/api/audit/events?limit=1&offset=0"),
+          ]);
+
+        if (!active) return;
+
+        setCurrentUser(user);
+        setServices([
+          {
+            name: "Auth Service",
+            status: authStatus,
+            detail: "Session and identity",
+          },
+          {
+            name: "Orders Service",
+            status: ordersStatus,
+            detail: "Order API and worker status",
+          },
+          {
+            name: "Feature Flags",
+            status: flagsStatus,
+            detail: "Flag management and evaluation",
+          },
+          {
+            name: "Audit Service",
+            status: auditStatus,
+            detail: "Searchable audit trail",
+          },
+        ]);
+        setError(null);
+      } catch (loadError) {
+        if (!active) return;
+        setError(loadError instanceof Error ? loadError.message : "Failed to load overview");
+        setServices([]);
       } finally {
-        if (isMounted) {
+        if (active) {
           setLoading(false);
         }
       }
     };
 
-    loadCurrentUser();
+    void load();
+
     return () => {
-      isMounted = false;
+      active = false;
     };
   }, []);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await authRequest<{ status: string }>("/auth/logout", { method: "POST" });
-      setCurrentUser(null);
-      setError(null);
-    } catch (logoutError) {
-      const message =
-        logoutError instanceof Error ? logoutError.message : "Logout failed";
-      setError(message);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+  const healthyCount = useMemo(
+    () => services.filter((service) => service.status === "healthy").length,
+    [services],
+  );
 
   return (
     <main className="page">
-      <h1>RudikCloud Dashboard</h1>
-
-      {loading ? <p>Loading session...</p> : null}
-
-      {!loading && currentUser ? (
-        <section className="card">
-          <p>
-            Logged in as <strong>{currentUser.email}</strong>
-          </p>
+      <PageHeader
+        title="System Overview"
+        description="Operational snapshot of identity, orders, flags, and audit services."
+        actions={
           <div className="actions">
-            <Link href="/orders" className="button button-secondary">
-              Orders
+            <Link href="/orders" className="button">
+              Create Order
             </Link>
-            <Link href="/flags" className="button button-secondary">
-              Flags
-            </Link>
-            <Link href="/audit" className="button button-secondary">
-              Audit
-            </Link>
+            <a
+              href="http://localhost:3001"
+              target="_blank"
+              rel="noreferrer"
+              className="button button-secondary"
+            >
+              Open Grafana
+            </a>
           </div>
-          <button
-            type="button"
-            className="button"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? "Logging out..." : "Logout"}
-          </button>
+        }
+        meta={
+          <>
+            <span className="pill">
+              {currentUser ? `Signed in: ${currentUser.email}` : "Not signed in"}
+            </span>
+            <span className="pill">Healthy services: {healthyCount}/{services.length || 4}</span>
+          </>
+        }
+      />
+
+      {loading ? <LoadingSkeleton title="Loading system status" lines={5} /> : null}
+
+      {error ? (
+        <ErrorState
+          message={error}
+          action={
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={() => window.location.reload()}
+            >
+              Reload
+            </button>
+          }
+        />
+      ) : null}
+
+      {!loading && !error ? (
+        <section className="overview-grid">
+          {services.map((service) => (
+            <article key={service.name} className="card overview-card">
+              <div className="overview-card__header">
+                <h3>{service.name}</h3>
+                <span className={`health-indicator health-${service.status}`}>
+                  {statusLabel(service.status)}
+                </span>
+              </div>
+              <p>{service.detail}</p>
+            </article>
+          ))}
         </section>
       ) : null}
 
-      {!loading && !currentUser ? (
-        <section className="card">
-          <p>You are not logged in.</p>
-          <div className="actions">
-            <Link href="/login" className="button">
-              Login
-            </Link>
-            <Link href="/register" className="button button-secondary">
-              Register
-            </Link>
-          </div>
-        </section>
-      ) : null}
-
-      {error ? <p className="error">{error}</p> : null}
+      <section className="card">
+        <h3>Quick Links</h3>
+        <div className="actions">
+          <Link href="/orders" className="button button-secondary">
+            Orders
+          </Link>
+          <Link href="/flags" className="button button-secondary">
+            Feature Flags
+          </Link>
+          <Link href="/audit" className="button button-secondary">
+            Audit Logs
+          </Link>
+          <Link href="/demo" className="button button-secondary">
+            Demo Controls
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }
