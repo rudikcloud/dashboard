@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppShell } from "../components/layout/app-shell";
+import { ToastProvider } from "../components/ui/toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppShell>{children}</AppShell>
+        <ToastProvider>
+          <AppShell>{children}</AppShell>
+        </ToastProvider>
       </body>
     </html>
   );
