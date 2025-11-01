@@ -1,8 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { Plus, Save } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { DataTableShell } from "../../components/ui/data-table-shell";
+import { PageHeader } from "../../components/ui/page-header";
+import { EmptyState, ErrorState, LoadingSkeleton } from "../../components/ui/states";
+import { useToast } from "../../components/ui/toast";
 import {
   createFlag,
   listFlags,
@@ -13,59 +17,60 @@ import {
 const ENVIRONMENT = "dev";
 
 type FlagDraft = {
+  key: string;
   description: string;
   enabled: boolean;
-  rolloutPercent: string;
+  rolloutPercent: number;
   allowlistText: string;
 };
 
-function toAllowlist(allowlistText: string): string[] {
-  return allowlistText
-    .split(",")
+function parseAllowlist(value: string): string[] {
+  return value
+    .split(/[\n,]/)
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
 }
 
+function createDefaultDraft(): FlagDraft {
+  return {
+    key: "",
+    description: "",
+    enabled: false,
+    rolloutPercent: 0,
+    allowlistText: "",
+  };
+}
+
+function buildEditDraft(flag: FeatureFlag): FlagDraft {
+  return {
+    key: flag.key,
+    description: flag.description,
+    enabled: flag.enabled,
+    rolloutPercent: flag.rollout_percent,
+    allowlistText: flag.allowlist.join("\n"),
+  };
+}
+
 export default function FlagsPage() {
+  const { showToast } = useToast();
+
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, FlagDraft>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [savingKey, setSavingKey] = useState<string | null>(null);
 
-  const [newKey, setNewKey] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newEnabled, setNewEnabled] = useState(false);
-  const [newRolloutPercent, setNewRolloutPercent] = useState("0");
-  const [newAllowlistText, setNewAllowlistText] = useState("");
+  const [search, setSearch] = useState("");
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<FeatureFlag | null>(null);
+  const [draft, setDraft] = useState<FlagDraft>(createDefaultDraft());
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const loadFlags = useCallback(async () => {
+    setLoading(true);
     try {
       const result = await listFlags(ENVIRONMENT);
       setFlags(result);
-
-      setDrafts((previous) => {
-        const nextDrafts: Record<string, FlagDraft> = { ...previous };
-        for (const flag of result) {
-          const id = `${flag.environment}:${flag.key}`;
-          if (!nextDrafts[id]) {
-            nextDrafts[id] = {
-              description: flag.description,
-              enabled: flag.enabled,
-              rolloutPercent: String(flag.rollout_percent),
-              allowlistText: flag.allowlist.join(", "),
-            };
-          }
-        }
-        for (const id of Object.keys(nextDrafts)) {
-          if (!result.some((flag) => `${flag.environment}:${flag.key}` === id)) {
-            delete nextDrafts[id];
-          }
-        }
-        return nextDrafts;
-      });
-
       setError(null);
     } catch (requestError) {
       const message =
@@ -74,264 +79,406 @@ export default function FlagsPage() {
           : "Failed to load flags";
       setError(message);
       setFlags([]);
-      setDrafts({});
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadFlags();
+    void loadFlags();
   }, [loadFlags]);
 
-  const handleCreateFlag = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const normalizedKey = newKey.trim();
-    const rollout = Number(newRolloutPercent);
-    if (!normalizedKey) {
-      setError("Flag key is required.");
-      return;
-    }
-    if (Number.isNaN(rollout) || rollout < 0 || rollout > 100) {
-      setError("Rollout percent must be between 0 and 100.");
-      return;
+  const filteredFlags = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      return flags;
     }
 
-    setSubmitting(true);
+    return flags.filter((flag) => {
+      return (
+        flag.key.toLowerCase().includes(query) ||
+        flag.description.toLowerCase().includes(query)
+      );
+    });
+  }, [flags, search]);
+
+  const openCreateDialog = () => {
+    setFormError(null);
+    setDraft(createDefaultDraft());
+    setCreateOpen(true);
+  };
+
+  const openEditDialog = (flag: FeatureFlag) => {
+    setFormError(null);
+    setDraft(buildEditDraft(flag));
+    setEditTarget(flag);
+  };
+
+  const closeDialogs = () => {
+    setCreateOpen(false);
+    setEditTarget(null);
+    setFormError(null);
+    setDraft(createDefaultDraft());
+  };
+
+  const validateDraft = (isCreate: boolean): boolean => {
+    if (isCreate && !draft.key.trim()) {
+      setFormError("Flag key is required.");
+      return false;
+    }
+
+    if (draft.rolloutPercent < 0 || draft.rolloutPercent > 100) {
+      setFormError("Rollout percent must be between 0 and 100.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleCreate = async () => {
+    if (!validateDraft(true)) {
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
     try {
       await createFlag({
-        key: normalizedKey,
-        description: newDescription.trim(),
+        key: draft.key.trim(),
+        description: draft.description.trim(),
         environment: ENVIRONMENT,
-        enabled: newEnabled,
-        rollout_percent: rollout,
-        allowlist: toAllowlist(newAllowlistText),
+        enabled: draft.enabled,
+        rollout_percent: draft.rolloutPercent,
+        allowlist: parseAllowlist(draft.allowlistText),
       });
-      setNewKey("");
-      setNewDescription("");
-      setNewEnabled(false);
-      setNewRolloutPercent("0");
-      setNewAllowlistText("");
+
+      showToast({ title: "Flag created", description: "New feature flag saved." });
+      closeDialogs();
       await loadFlags();
     } catch (requestError) {
       const message =
-        requestError instanceof Error
-          ? requestError.message
-          : "Failed to create flag";
+        requestError instanceof Error ? requestError.message : "Failed to create flag";
+
       if (message.toLowerCase().includes("already exists")) {
-        setError(
-          "This flag already exists in this environment. Update it below and click Save changes.",
+        setFormError(
+          "A flag with this key already exists in this environment. Select it from the list and edit it.",
         );
       } else {
-        setError(message);
+        setFormError("Unable to create flag. Please review your input and try again.");
       }
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
 
-  const updateDraft = (id: string, update: Partial<FlagDraft>) => {
-    setDrafts((previous) => ({
-      ...previous,
-      [id]: {
-        ...previous[id],
-        ...update,
-      },
-    }));
-  };
-
-  const handleSaveFlag = async (flag: FeatureFlag) => {
-    const id = `${flag.environment}:${flag.key}`;
-    const draft = drafts[id];
-    if (!draft) {
+  const handleEditSave = async () => {
+    if (!editTarget) {
       return;
     }
 
-    const rollout = Number(draft.rolloutPercent);
-    if (Number.isNaN(rollout) || rollout < 0 || rollout > 100) {
-      setError("Rollout percent must be between 0 and 100.");
+    if (!validateDraft(false)) {
       return;
     }
 
-    setSavingKey(id);
+    setSaving(true);
+    setFormError(null);
     try {
       await updateFlag(
-        flag.key,
+        editTarget.key,
         {
           description: draft.description.trim(),
           enabled: draft.enabled,
-          rollout_percent: rollout,
-          allowlist: toAllowlist(draft.allowlistText),
+          rollout_percent: draft.rolloutPercent,
+          allowlist: parseAllowlist(draft.allowlistText),
         },
-        flag.environment,
+        editTarget.environment,
       );
+
+      showToast({ title: "Flag updated", description: `${editTarget.key} saved.` });
+      closeDialogs();
       await loadFlags();
-    } catch (requestError) {
-      const message =
-        requestError instanceof Error ? requestError.message : "Failed to save flag";
-      setError(message);
+    } catch {
+      setFormError("Unable to save flag changes. Please try again.");
     } finally {
-      setSavingKey(null);
+      setSaving(false);
     }
   };
 
   return (
     <main className="page">
-      <h1>Feature Flags</h1>
-
-      <section className="card">
-        <h2>Create Flag</h2>
-        <form className="form" onSubmit={handleCreateFlag}>
-          <label className="field">
-            <span>Key</span>
-            <input
-              type="text"
-              value={newKey}
-              onChange={(event) => setNewKey(event.target.value)}
-              required
-            />
-          </label>
-
-          <label className="field">
-            <span>Description</span>
-            <input
-              type="text"
-              value={newDescription}
-              onChange={(event) => setNewDescription(event.target.value)}
-            />
-          </label>
-
-          <label className="field">
-            <span>Rollout Percent (0-100)</span>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={newRolloutPercent}
-              onChange={(event) => setNewRolloutPercent(event.target.value)}
-              required
-            />
-          </label>
-
-          <label className="field">
-            <span>Allowlist (comma-separated ids/emails, optional)</span>
-            <input
-              type="text"
-              value={newAllowlistText}
-              onChange={(event) => setNewAllowlistText(event.target.value)}
-            />
-          </label>
-
-          <label className="field">
-            <span>
-              <input
-                type="checkbox"
-                checked={newEnabled}
-                onChange={(event) => setNewEnabled(event.target.checked)}
-              />{" "}
-              Enabled
-            </span>
-          </label>
-
-          <button type="submit" className="button" disabled={submitting}>
-            {submitting ? "Creating..." : "Create flag"}
+      <PageHeader
+        title="Feature Flags"
+        description="Manage targeted rollouts using enabled state, allowlists, and percentage-based exposure."
+        actions={
+          <button type="button" className="button" onClick={openCreateDialog}>
+            <Plus size={16} aria-hidden />
+            New Flag
           </button>
-        </form>
-      </section>
+        }
+        meta={<span className="pill">Environment: {ENVIRONMENT}</span>}
+      />
 
-      {loading ? <p>Loading flags...</p> : null}
-      {error ? <p className="error">{error}</p> : null}
+      {loading ? <LoadingSkeleton title="Loading feature flags" lines={6} /> : null}
+
+      {error ? (
+        <ErrorState
+          message={error}
+          action={
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={() => void loadFlags()}
+            >
+              Retry
+            </button>
+          }
+        />
+      ) : null}
 
       {!loading && !error ? (
-        <section className="card">
-          <h2>Flags ({ENVIRONMENT})</h2>
-          {flags.length === 0 ? <p>No flags yet.</p> : null}
+        <DataTableShell
+          title="Flags"
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search flags"
+          pagination={<p>{filteredFlags.length} flags</p>}
+        >
+          {filteredFlags.length === 0 ? (
+            <EmptyState
+              title="No feature flags"
+              description="Create a flag to start controlling rollouts for new functionality."
+              action={
+                <button type="button" className="button" onClick={openCreateDialog}>
+                  Create Flag
+                </button>
+              }
+            />
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Key</th>
+                  <th>Description</th>
+                  <th>Enabled</th>
+                  <th>Rollout %</th>
+                  <th>Allowlist</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFlags.map((flag) => (
+                  <tr key={`${flag.environment}:${flag.key}`}>
+                    <td>
+                      <strong>{flag.key}</strong>
+                      <div className="muted">{flag.environment}</div>
+                    </td>
+                    <td>{flag.description || "-"}</td>
+                    <td>
+                      <span
+                        className={`health-indicator ${
+                          flag.enabled ? "health-healthy" : "health-offline"
+                        }`}
+                      >
+                        {flag.enabled ? "Enabled" : "Disabled"}
+                      </span>
+                    </td>
+                    <td>{flag.rollout_percent}%</td>
+                    <td>{flag.allowlist.length ? flag.allowlist.length : "-"}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="button button-secondary button-compact"
+                        onClick={() => openEditDialog(flag)}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </DataTableShell>
+      ) : null}
 
-          {flags.map((flag) => {
-            const id = `${flag.environment}:${flag.key}`;
-            const draft = drafts[id];
-            if (!draft) {
-              return null;
-            }
+      {createOpen ? (
+        <div className="dialog-overlay" role="presentation">
+          <div className="dialog dialog-wide" role="dialog" aria-modal="true">
+            <div className="dialog__header">
+              <h3>Create Feature Flag</h3>
+            </div>
 
-            return (
-              <div className="card" key={id}>
-                <p>
-                  <strong>{flag.key}</strong>
-                </p>
+            <div className="form">
+              <label className="field">
+                <span>Key</span>
+                <input
+                  type="text"
+                  value={draft.key}
+                  onChange={(event) => setDraft({ ...draft, key: event.target.value })}
+                  placeholder="newCheckout"
+                />
+              </label>
 
-                <label className="field">
-                  <span>Description</span>
+              <label className="field">
+                <span>Description</span>
+                <input
+                  type="text"
+                  value={draft.description}
+                  onChange={(event) =>
+                    setDraft({ ...draft, description: event.target.value })
+                  }
+                  placeholder="Describe the rollout purpose"
+                />
+              </label>
+
+              <label className="field">
+                <span>Rollout Percent: {draft.rolloutPercent}%</span>
+                <div className="range-row">
                   <input
-                    type="text"
-                    value={draft.description}
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={draft.rolloutPercent}
                     onChange={(event) =>
-                      updateDraft(id, { description: event.target.value })
+                      setDraft({ ...draft, rolloutPercent: Number(event.target.value) })
                     }
+                    aria-label="Rollout percent slider"
                   />
-                </label>
-
-                <label className="field">
-                  <span>Rollout Percent (0-100)</span>
                   <input
                     type="number"
                     min={0}
                     max={100}
                     value={draft.rolloutPercent}
                     onChange={(event) =>
-                      updateDraft(id, { rolloutPercent: event.target.value })
+                      setDraft({ ...draft, rolloutPercent: Number(event.target.value) })
                     }
+                    aria-label="Rollout percent input"
                   />
-                </label>
+                </div>
+              </label>
 
-                <label className="field">
-                  <span>Allowlist (comma-separated, optional)</span>
-                  <input
-                    type="text"
-                    value={draft.allowlistText}
-                    onChange={(event) =>
-                      updateDraft(id, { allowlistText: event.target.value })
-                    }
-                  />
-                </label>
+              <label className="field checkbox-field">
+                <span>Enabled</span>
+                <input
+                  type="checkbox"
+                  checked={draft.enabled}
+                  onChange={(event) =>
+                    setDraft({ ...draft, enabled: event.target.checked })
+                  }
+                />
+              </label>
 
-                <label className="field">
-                  <span>
-                    <input
-                      type="checkbox"
-                      checked={draft.enabled}
-                      onChange={(event) =>
-                        updateDraft(id, { enabled: event.target.checked })
-                      }
-                    />{" "}
-                    Enabled
-                  </span>
-                </label>
+              <label className="field">
+                <span>Allowlist (comma or newline separated, optional)</span>
+                <textarea
+                  value={draft.allowlistText}
+                  onChange={(event) =>
+                    setDraft({ ...draft, allowlistText: event.target.value })
+                  }
+                  placeholder="user@example.com"
+                />
+              </label>
 
-                <button
-                  type="button"
-                  className="button"
-                  onClick={() => handleSaveFlag(flag)}
-                  disabled={savingKey === id}
-                >
-                  {savingKey === id ? "Saving..." : "Save changes"}
-                </button>
-              </div>
-            );
-          })}
-        </section>
+              {formError ? <p className="error">{formError}</p> : null}
+            </div>
+
+            <div className="dialog__actions">
+              <button type="button" className="button button-secondary" onClick={closeDialogs}>
+                Cancel
+              </button>
+              <button type="button" className="button" onClick={() => void handleCreate()}>
+                {saving ? "Saving..." : "Create Flag"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
-      <p>
-        <Link href="/orders">Go to Orders</Link>
-      </p>
-      <p>
-        <Link href="/audit">View Audit Logs</Link>
-      </p>
-      <p>
-        <Link href="/">Back to Home</Link>
-      </p>
+      {editTarget ? (
+        <div className="dialog-overlay" role="presentation">
+          <div className="dialog dialog-wide" role="dialog" aria-modal="true">
+            <div className="dialog__header">
+              <h3>Edit {editTarget.key}</h3>
+            </div>
+
+            <div className="form">
+              <label className="field">
+                <span>Description</span>
+                <input
+                  type="text"
+                  value={draft.description}
+                  onChange={(event) =>
+                    setDraft({ ...draft, description: event.target.value })
+                  }
+                />
+              </label>
+
+              <label className="field">
+                <span>Rollout Percent: {draft.rolloutPercent}%</span>
+                <div className="range-row">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={draft.rolloutPercent}
+                    onChange={(event) =>
+                      setDraft({ ...draft, rolloutPercent: Number(event.target.value) })
+                    }
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={draft.rolloutPercent}
+                    onChange={(event) =>
+                      setDraft({ ...draft, rolloutPercent: Number(event.target.value) })
+                    }
+                    aria-label="Rollout percent input"
+                  />
+                </div>
+              </label>
+
+              <label className="field checkbox-field">
+                <span>Enabled</span>
+                <input
+                  type="checkbox"
+                  checked={draft.enabled}
+                  onChange={(event) =>
+                    setDraft({ ...draft, enabled: event.target.checked })
+                  }
+                />
+              </label>
+
+              <label className="field">
+                <span>Allowlist (comma or newline separated, optional)</span>
+                <textarea
+                  value={draft.allowlistText}
+                  onChange={(event) =>
+                    setDraft({ ...draft, allowlistText: event.target.value })
+                  }
+                />
+              </label>
+
+              {formError ? <p className="error">{formError}</p> : null}
+            </div>
+
+            <div className="dialog__actions">
+              <button type="button" className="button button-secondary" onClick={closeDialogs}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button"
+                onClick={() => void handleEditSave()}
+                disabled={saving}
+              >
+                <Save size={15} aria-hidden />
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
