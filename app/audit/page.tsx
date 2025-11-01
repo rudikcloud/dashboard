@@ -1,18 +1,53 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { Eye } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
-import { listAuditEvents, type AuditEvent } from "../../lib/audit-client";
+import { DataTableShell } from "../../components/ui/data-table-shell";
+import { PageHeader } from "../../components/ui/page-header";
+import { EmptyState, ErrorState, LoadingSkeleton } from "../../components/ui/states";
+import { useToast } from "../../components/ui/toast";
+import {
+  getAuditEvent,
+  listAuditEvents,
+  type AuditEvent,
+} from "../../lib/audit-client";
+
+function formatJson(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "null";
+  }
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function formatDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleString();
+}
 
 export default function AuditPage() {
+  const { showToast } = useToast();
+
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
   const [actionType, setActionType] = useState("");
   const [resourceType, setResourceType] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+
+  const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const loadEvents = useCallback(async () => {
     setLoading(true);
@@ -37,24 +72,59 @@ export default function AuditPage() {
     } finally {
       setLoading(false);
     }
-  }, [actionType, resourceType, from, to]);
+  }, [actionType, from, resourceType, to]);
 
   useEffect(() => {
     void loadEvents();
   }, [loadEvents]);
+
+  const filteredEvents = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      return events;
+    }
+
+    return events.filter((event) => {
+      return (
+        event.action_type.toLowerCase().includes(query) ||
+        event.resource_type.toLowerCase().includes(query) ||
+        (event.resource_id ?? "").toLowerCase().includes(query) ||
+        event.actor_user_id.toLowerCase().includes(query)
+      );
+    });
+  }, [events, search]);
 
   const handleFilterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await loadEvents();
   };
 
+  const handleOpenDetails = async (id: string) => {
+    setDetailLoading(true);
+    try {
+      const eventDetail = await getAuditEvent(id);
+      setSelectedEvent(eventDetail);
+    } catch {
+      showToast({
+        variant: "error",
+        title: "Unable to load event details",
+        description: "Please try again.",
+      });
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   return (
     <main className="page">
-      <h1>Audit Logs</h1>
+      <PageHeader
+        title="Audit Logs"
+        description="Search and inspect immutable audit events across platform actions."
+      />
 
       <section className="card">
-        <h2>Filters</h2>
-        <form className="form" onSubmit={handleFilterSubmit}>
+        <h3>Filters</h3>
+        <form className="form filter-grid" onSubmit={handleFilterSubmit}>
           <label className="field">
             <span>Action Type</span>
             <input
@@ -76,7 +146,7 @@ export default function AuditPage() {
           </label>
 
           <label className="field">
-            <span>From (ISO)</span>
+            <span>From (ISO timestamp)</span>
             <input
               type="text"
               value={from}
@@ -86,7 +156,7 @@ export default function AuditPage() {
           </label>
 
           <label className="field">
-            <span>To (ISO)</span>
+            <span>To (ISO timestamp)</span>
             <input
               type="text"
               value={to}
@@ -95,25 +165,49 @@ export default function AuditPage() {
             />
           </label>
 
-          <button className="button" type="submit">
-            Apply Filters
-          </button>
+          <div className="actions filter-grid__actions">
+            <button className="button" type="submit">
+              Apply Filters
+            </button>
+          </div>
         </form>
       </section>
 
-      {loading ? <p>Loading audit events...</p> : null}
-      {error ? <p className="error">{error}</p> : null}
+      {loading ? <LoadingSkeleton title="Loading audit logs" lines={6} /> : null}
+
+      {error ? (
+        <ErrorState
+          message={error}
+          action={
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={() => void loadEvents()}
+            >
+              Retry
+            </button>
+          }
+        />
+      ) : null}
 
       {!loading && !error ? (
-        <section className="card">
-          <h2>Events</h2>
-          {events.length === 0 ? (
-            <p>No audit events found.</p>
+        <DataTableShell
+          title="Events"
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search by action, resource, actor, or id"
+          pagination={<p>{filteredEvents.length} events</p>}
+        >
+          {filteredEvents.length === 0 ? (
+            <EmptyState
+              title="No audit events"
+              description="No records match the current filters."
+            />
           ) : (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Created At</th>
+                  <th>Created</th>
                   <th>Action</th>
                   <th>Resource</th>
                   <th>Actor</th>
@@ -121,29 +215,101 @@ export default function AuditPage() {
                 </tr>
               </thead>
               <tbody>
-                {events.map((auditEvent) => (
+                {filteredEvents.map((auditEvent) => (
                   <tr key={auditEvent.id}>
-                    <td>{auditEvent.created_at}</td>
+                    <td>{formatDate(auditEvent.created_at)}</td>
                     <td>{auditEvent.action_type}</td>
                     <td>
                       {auditEvent.resource_type}
-                      {auditEvent.resource_id ? `:${auditEvent.resource_id}` : ""}
+                      {auditEvent.resource_id ? (
+                        <div className="muted">{auditEvent.resource_id}</div>
+                      ) : null}
                     </td>
                     <td>{auditEvent.actor_user_id}</td>
                     <td>
-                      <Link href={`/audit/${auditEvent.id}`}>View</Link>
+                      <button
+                        type="button"
+                        className="button button-secondary button-compact"
+                        onClick={() => void handleOpenDetails(auditEvent.id)}
+                        disabled={detailLoading}
+                        aria-label={`View details for event ${auditEvent.id}`}
+                      >
+                        <Eye size={15} aria-hidden />
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-        </section>
+        </DataTableShell>
       ) : null}
 
-      <p>
-        <Link href="/">Back to Home</Link>
-      </p>
+      {selectedEvent ? (
+        <div className="dialog-overlay" role="presentation">
+          <div className="dialog dialog-xwide" role="dialog" aria-modal="true">
+            <div className="dialog__header">
+              <h3>Audit Event Details</h3>
+            </div>
+
+            <div className="detail-grid">
+              <div className="detail-item">
+                <span>Event ID</span>
+                <strong>{selectedEvent.id}</strong>
+              </div>
+              <div className="detail-item">
+                <span>Created</span>
+                <strong>{formatDate(selectedEvent.created_at)}</strong>
+              </div>
+              <div className="detail-item">
+                <span>Action</span>
+                <strong>{selectedEvent.action_type}</strong>
+              </div>
+              <div className="detail-item">
+                <span>Resource</span>
+                <strong>
+                  {selectedEvent.resource_type}
+                  {selectedEvent.resource_id ? `:${selectedEvent.resource_id}` : ""}
+                </strong>
+              </div>
+              <div className="detail-item">
+                <span>Actor</span>
+                <strong>{selectedEvent.actor_user_id}</strong>
+              </div>
+              <div className="detail-item">
+                <span>IP</span>
+                <strong>{selectedEvent.ip_address ?? "-"}</strong>
+              </div>
+            </div>
+
+            <section className="detail-json">
+              <h4>Before JSON</h4>
+              <pre className="json-block">{formatJson(selectedEvent.before_json)}</pre>
+            </section>
+
+            <section className="detail-json">
+              <h4>After JSON</h4>
+              <pre className="json-block">{formatJson(selectedEvent.after_json)}</pre>
+            </section>
+
+            <section className="detail-json">
+              <h4>Metadata JSON</h4>
+              <pre className="json-block">{formatJson(selectedEvent.metadata_json)}</pre>
+            </section>
+
+            <div className="dialog__actions">
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => setSelectedEvent(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

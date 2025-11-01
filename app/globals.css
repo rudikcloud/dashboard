@@ -754,6 +754,12 @@ textarea {
   width: min(680px, 100% - var(--space-4));
 }
 
+.dialog-xwide {
+  width: min(960px, 100% - var(--space-4));
+  max-height: min(92vh, 860px);
+  overflow: auto;
+}
+
 .dialog__header {
   display: flex;
   align-items: center;
@@ -888,6 +894,47 @@ textarea {
 
 .toast__close:hover {
   background: #edf2fb;
+}
+
+.filter-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  align-items: end;
+}
+
+.filter-grid__actions {
+  justify-content: flex-end;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.detail-item {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.detail-item span {
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.detail-item strong {
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.detail-json {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.detail-json h4 {
+  margin: 0;
+  font-size: 14px;
 }
 
 .sr-only {
@@ -1070,6 +1117,14 @@ textarea {
   }
 
   .split-form__actions {
+    justify-content: flex-start;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-grid__actions {
     justify-content: flex-start;
   }
 }
