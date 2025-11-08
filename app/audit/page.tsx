@@ -49,6 +49,23 @@ export default function AuditPage() {
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  useEffect(() => {
+    if (!selectedEvent) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedEvent(null);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [selectedEvent]);
+
   const loadEvents = useCallback(async () => {
     setLoading(true);
     try {

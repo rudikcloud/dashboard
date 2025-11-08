@@ -259,6 +259,15 @@ a:focus-visible {
   padding: var(--space-8);
 }
 
+.auth-page {
+  width: min(520px, 100%);
+}
+
+.auth-card {
+  display: grid;
+  gap: var(--space-4);
+}
+
 .page {
   width: min(1120px, 100%);
   margin: 0 auto;

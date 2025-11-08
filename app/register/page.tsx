@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { PageHeader } from "../../components/ui/page-header";
+import { ErrorState } from "../../components/ui/states";
 import { authRequest } from "../../lib/auth-client";
 
 export default function RegisterPage() {
@@ -34,53 +36,46 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="page">
-      <h1>Register</h1>
+    <main className="page auth-page">
+      <PageHeader
+        title="Create account"
+        description="Register a local account to access orders, flags, audit, and demo controls."
+      />
 
-      <form className="form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span>Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </label>
+      <section className="card auth-card">
+        <form className="form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span>Email</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </label>
 
-        <label className="field">
-          <span>Password</span>
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            minLength={8}
-          />
-        </label>
+          <label className="field">
+            <span>Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              minLength={8}
+            />
+          </label>
 
-        <button type="submit" className="button" disabled={submitting}>
-          {submitting ? "Creating account..." : "Create account"}
-        </button>
-      </form>
+          <button type="submit" className="button" disabled={submitting}>
+            {submitting ? "Creating account..." : "Create account"}
+          </button>
+        </form>
 
-      {error ? <p className="error">{error}</p> : null}
+        <p>
+          Already have an account? <Link href="/login">Sign in</Link>
+        </p>
+      </section>
 
-      <p>
-        Already have an account? <Link href="/login">Login</Link>
-      </p>
-      <p>
-        <Link href="/flags">Flags</Link>
-      </p>
-      <p>
-        <Link href="/orders">Orders</Link>
-      </p>
-      <p>
-        <Link href="/audit">Audit</Link>
-      </p>
-      <p>
-        <Link href="/">Back to Home</Link>
-      </p>
+      {error ? <ErrorState message={error} /> : null}
     </main>
   );
 }

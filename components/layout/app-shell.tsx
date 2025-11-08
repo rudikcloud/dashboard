@@ -11,7 +11,7 @@ import {
   UserCircle2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { authRequest, type User } from "../../lib/auth-client";
 import {
@@ -76,6 +76,7 @@ function UserMenu() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -102,6 +103,35 @@ function UserMenu() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!menuRef.current) {
+        return;
+      }
+
+      if (!menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
   const handleLogout = async () => {
     try {
       await authRequest<{ status: string }>("/auth/logout", { method: "POST" });
@@ -112,7 +142,7 @@ function UserMenu() {
   };
 
   return (
-    <div className="user-menu">
+    <div className="user-menu" ref={menuRef}>
       <button
         type="button"
         className="user-menu__trigger"
