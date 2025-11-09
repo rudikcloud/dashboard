@@ -183,6 +183,7 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
 
   const isAuthRoute = AUTH_ROUTES.has(pathname);
   const pageTitle = useMemo(() => getPageTitle(pathname), [pathname]);
@@ -190,6 +191,22 @@ export function AppShell({ children }: AppShellProps) {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1081px)");
+    const applyViewport = () => {
+      setIsDesktop(mediaQuery.matches);
+      if (mediaQuery.matches) {
+        setMobileOpen(false);
+      }
+    };
+
+    applyViewport();
+    mediaQuery.addEventListener("change", applyViewport);
+    return () => {
+      mediaQuery.removeEventListener("change", applyViewport);
+    };
+  }, []);
 
   if (isAuthRoute) {
     return <div className="auth-layout">{children}</div>;
@@ -206,15 +223,6 @@ export function AppShell({ children }: AppShellProps) {
               <span>Control Plane</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            className="icon-button app-sidebar__close-mobile"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <X size={18} aria-hidden />
-          </button>
         </div>
 
         <nav className="app-nav" aria-label="Sidebar navigation">
@@ -250,23 +258,32 @@ export function AppShell({ children }: AppShellProps) {
           <div className="app-topbar__left">
             <button
               type="button"
-              className="icon-button app-topbar__mobile-toggle"
-              onClick={() => setMobileOpen(true)}
-              aria-label="Open sidebar"
+              className="icon-button app-topbar__sidebar-toggle"
+              onClick={() => {
+                if (isDesktop) {
+                  setCollapsed((previous) => !previous);
+                } else {
+                  setMobileOpen((previous) => !previous);
+                }
+              }}
+              aria-label={
+                isDesktop
+                  ? collapsed
+                    ? "Expand sidebar"
+                    : "Collapse sidebar"
+                  : mobileOpen
+                    ? "Close sidebar"
+                    : "Open sidebar"
+              }
             >
-              <Menu size={18} aria-hidden />
-            </button>
-
-            <button
-              type="button"
-              className="icon-button app-topbar__collapse-toggle"
-              onClick={() => setCollapsed((previous) => !previous)}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {collapsed ? (
-                <ChevronRight size={18} aria-hidden />
+              {isDesktop ? (
+                collapsed ? (
+                  <ChevronRight size={18} aria-hidden />
+                ) : (
+                  <ChevronLeft size={18} aria-hidden />
+                )
               ) : (
-                <ChevronLeft size={18} aria-hidden />
+                mobileOpen ? <X size={18} aria-hidden /> : <Menu size={18} aria-hidden />
               )}
             </button>
 

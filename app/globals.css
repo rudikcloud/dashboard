@@ -145,10 +145,6 @@ a:focus-visible {
   font-size: 12px;
 }
 
-.app-sidebar__close-mobile {
-  display: none;
-}
-
 .app-nav {
   padding: var(--space-3) var(--space-3) var(--space-6);
   overflow-y: auto;
@@ -244,8 +240,8 @@ a:focus-visible {
   font-weight: 700;
 }
 
-.app-topbar__mobile-toggle {
-  display: none;
+.app-topbar__sidebar-toggle {
+  display: inline-flex;
 }
 
 .app-content {
@@ -1081,10 +1077,6 @@ textarea {
 }
 
 @media (max-width: 1080px) {
-  .app-topbar__collapse-toggle {
-    display: none;
-  }
-
   .app-shell {
     display: block;
   }
@@ -1103,10 +1095,6 @@ textarea {
     transform: translateX(0);
   }
 
-  .app-sidebar__close-mobile {
-    display: inline-flex;
-  }
-
   .app-backdrop {
     display: block;
     position: fixed;
@@ -1119,10 +1107,6 @@ textarea {
 
   .app-topbar {
     padding: 0 var(--space-4);
-  }
-
-  .app-topbar__mobile-toggle {
-    display: inline-flex;
   }
 
   .app-content {
