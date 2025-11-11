@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ChevronLeft,
-  ChevronRight,
+  ArrowUpRight,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   UserCircle2,
   X,
@@ -48,9 +49,11 @@ function NavItem({
         target="_blank"
         rel="noreferrer"
         className={className}
+        onClick={onNavigate}
       >
         <Icon size={17} aria-hidden />
         <span>{item.label}</span>
+        <ArrowUpRight size={14} aria-hidden className="app-nav__external-icon" />
       </a>
     );
   }
@@ -220,9 +223,33 @@ export function AppShell({ children }: AppShellProps) {
             <div className="app-sidebar__logo">RC</div>
             <div className="app-sidebar__brand-text">
               <strong>RudikCloud</strong>
-              <span>Control Plane</span>
+              <span>Platform Console</span>
             </div>
           </div>
+
+          {isDesktop ? (
+            <button
+              type="button"
+              className="icon-button app-sidebar__collapse-toggle"
+              onClick={() => setCollapsed((previous) => !previous)}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <PanelLeftOpen size={18} aria-hidden />
+              ) : (
+                <PanelLeftClose size={18} aria-hidden />
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="icon-button app-sidebar__collapse-toggle"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close sidebar"
+            >
+              <X size={18} aria-hidden />
+            </button>
+          )}
         </div>
 
         <nav className="app-nav" aria-label="Sidebar navigation">
@@ -242,6 +269,10 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           ))}
         </nav>
+
+        <div className="app-sidebar__footer">
+          <span className="app-sidebar__footer-label">Local Development</span>
+        </div>
       </aside>
 
       {mobileOpen ? (
@@ -249,46 +280,26 @@ export function AppShell({ children }: AppShellProps) {
           type="button"
           className="app-backdrop"
           onClick={() => setMobileOpen(false)}
-          aria-label="Close sidebar backdrop"
+          aria-label="Close sidebar"
         />
       ) : null}
 
       <div className="app-main">
         <header className="app-topbar">
           <div className="app-topbar__left">
-            <button
-              type="button"
-              className="icon-button app-topbar__sidebar-toggle"
-              onClick={() => {
-                if (isDesktop) {
-                  setCollapsed((previous) => !previous);
-                } else {
-                  setMobileOpen((previous) => !previous);
-                }
-              }}
-              aria-label={
-                isDesktop
-                  ? collapsed
-                    ? "Expand sidebar"
-                    : "Collapse sidebar"
-                  : mobileOpen
-                    ? "Close sidebar"
-                    : "Open sidebar"
-              }
-            >
-              {isDesktop ? (
-                collapsed ? (
-                  <ChevronRight size={18} aria-hidden />
-                ) : (
-                  <ChevronLeft size={18} aria-hidden />
-                )
-              ) : (
-                mobileOpen ? <X size={18} aria-hidden /> : <Menu size={18} aria-hidden />
-              )}
-            </button>
+            {!isDesktop ? (
+              <button
+                type="button"
+                className="icon-button app-topbar__mobile-toggle"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open sidebar menu"
+              >
+                <Menu size={18} aria-hidden />
+              </button>
+            ) : null}
 
             <div>
-              <p className="app-topbar__label">Dashboard</p>
+              <p className="app-topbar__label">RudikCloud Control Plane</p>
               <h1 className="app-topbar__title">{pageTitle}</h1>
             </div>
           </div>

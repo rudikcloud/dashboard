@@ -5,7 +5,8 @@ import {
   ClipboardList,
   Flag,
   LayoutDashboard,
-  SlidersHorizontal,
+  PlayCircle,
+  Radar,
 } from "lucide-react";
 
 export type NavigationItem = {
@@ -38,10 +39,10 @@ export const navigationGroups: NavigationGroup[] = [
       {
         label: "Observability",
         href: "http://localhost:3001",
-        icon: Activity,
+        icon: Radar,
         external: true,
       },
-      { label: "Demo Controls", href: "/demo", icon: SlidersHorizontal },
+      { label: "Demo Controls", href: "/demo", icon: PlayCircle },
       { label: "Incidents", href: "/incidents", icon: AlertTriangle },
     ],
   },
