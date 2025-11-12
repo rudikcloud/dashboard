@@ -1,5 +1,5 @@
 import { AlertTriangle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -22,10 +22,16 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const titleId = useId();
+  const descriptionId = useId();
+
   useEffect(() => {
     if (!open) {
       return;
     }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -35,6 +41,7 @@ export function ConfirmDialog({
 
     document.addEventListener("keydown", handleEscape);
     return () => {
+      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleEscape);
     };
   }, [onCancel, open]);
@@ -44,21 +51,29 @@ export function ConfirmDialog({
   }
 
   return (
-    <div className="dialog-overlay" role="presentation">
+    <div
+      className="dialog-overlay"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onCancel();
+        }
+      }}
+    >
       <div
         className="dialog"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-description"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
       >
         <div className="dialog__header">
           <div className="dialog__icon" aria-hidden>
             <AlertTriangle size={18} />
           </div>
-          <h3 id="confirm-dialog-title">{title}</h3>
+          <h3 id={titleId}>{title}</h3>
         </div>
-        <p id="confirm-dialog-description">{description}</p>
+        <p id={descriptionId}>{description}</p>
         <div className="dialog__actions">
           <button type="button" className="button button-secondary" onClick={onCancel}>
             {cancelText}

@@ -1,7 +1,9 @@
+import { Search } from "lucide-react";
 import type { ReactNode } from "react";
 
 type DataTableShellProps = {
   title: string;
+  description?: string;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
@@ -12,6 +14,7 @@ type DataTableShellProps = {
 
 export function DataTableShell({
   title,
+  description,
   searchValue,
   onSearchChange,
   searchPlaceholder = "Search",
@@ -22,10 +25,17 @@ export function DataTableShell({
   return (
     <section className="card data-table-shell">
       <div className="data-table-shell__header">
-        <h3 className="data-table-shell__title">{title}</h3>
+        <div className="data-table-shell__meta">
+          <h3 className="data-table-shell__title">{title}</h3>
+          {description ? <p className="data-table-shell__description">{description}</p> : null}
+        </div>
+
         <div className="data-table-shell__controls">
           {typeof onSearchChange === "function" ? (
             <label className="data-table-shell__search" aria-label={`${title} search`}>
+              <span className="data-table-shell__search-icon" aria-hidden>
+                <Search size={15} />
+              </span>
               <span className="sr-only">Search</span>
               <input
                 type="search"

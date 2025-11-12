@@ -1,17 +1,16 @@
 "use client";
 
-import { CheckCircle2, CircleAlert, X } from "lucide-react";
+import { CheckCircle2, CircleAlert, Info, X } from "lucide-react";
 import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 
-type ToastVariant = "success" | "error";
+type ToastVariant = "success" | "error" | "info";
 
 type ToastInput = {
   title: string;
@@ -28,7 +27,21 @@ type ToastContextValue = {
   showToast: (input: ToastInput) => void;
 };
 
+const TOAST_LIFETIME_MS = 3600;
+
 const ToastContext = createContext<ToastContextValue | null>(null);
+
+function ToastIcon({ variant }: { variant: ToastVariant }) {
+  if (variant === "success") {
+    return <CheckCircle2 size={16} />;
+  }
+
+  if (variant === "error") {
+    return <CircleAlert size={16} />;
+  }
+
+  return <Info size={16} />;
+}
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastRecord[]>([]);
@@ -50,7 +63,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       setToasts((previous) => [...previous, record]);
       window.setTimeout(() => {
         removeToast(id);
-      }, 3600);
+      }, TOAST_LIFETIME_MS);
     },
     [removeToast],
   );
@@ -64,11 +77,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast toast-${toast.variant}`}>
             <div className="toast__icon" aria-hidden>
-              {toast.variant === "success" ? (
-                <CheckCircle2 size={16} />
-              ) : (
-                <CircleAlert size={16} />
-              )}
+              <ToastIcon variant={toast.variant} />
             </div>
             <div className="toast__content">
               <p className="toast__title">{toast.title}</p>

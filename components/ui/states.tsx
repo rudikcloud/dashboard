@@ -34,7 +34,9 @@ type EmptyStateProps = {
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
     <div className="state-card state-card-empty" role="status" aria-live="polite">
-      <Inbox size={30} aria-hidden />
+      <div className="state-card__icon" aria-hidden>
+        <Inbox size={26} />
+      </div>
       <h3>{title}</h3>
       <p>{description}</p>
       {action ? <div className="state-card__actions">{action}</div> : null}
