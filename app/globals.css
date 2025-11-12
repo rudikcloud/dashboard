@@ -486,6 +486,135 @@ p {
   gap: var(--space-3);
 }
 
+.overview-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
+  align-items: center;
+}
+
+.overview-hero__content {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 68ch;
+}
+
+.overview-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.overview-hero__status {
+  min-width: 180px;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.overview-hero__status-ring {
+  width: 82px;
+  height: 82px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  background: #f6f9ff;
+}
+
+.overview-state-healthy {
+  color: #0f5130;
+  box-shadow:
+    inset 0 0 0 1px rgba(80, 181, 123, 0.2),
+    0 0 0 8px rgba(139, 224, 168, 0.2);
+}
+
+.overview-state-degraded,
+.overview-state-syncing {
+  color: #7b5900;
+  box-shadow:
+    inset 0 0 0 1px rgba(195, 152, 11, 0.24),
+    0 0 0 8px rgba(250, 215, 124, 0.22);
+}
+
+.overview-state-offline {
+  color: #981b31;
+  box-shadow:
+    inset 0 0 0 1px rgba(204, 74, 105, 0.24),
+    0 0 0 8px rgba(252, 170, 186, 0.2);
+}
+
+.overview-service {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.overview-service__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.overview-service__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #c9daef;
+  color: #1658ad;
+  background: linear-gradient(135deg, #e5f0ff 0%, #edf8ff 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overview-service__body {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.overview-service__body h3 {
+  font-size: 17px;
+}
+
+.overview-service__footer {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.overview-quick-links {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.overview-quick-links__grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.overview-link-tile {
+  min-height: 86px;
+  border-radius: 14px;
+  border: 1px solid var(--border-default);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 140ms ease, transform 140ms ease, background-color 140ms ease;
+}
+
+.overview-link-tile:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 100%);
+}
+
 .overview-card__header {
   display: flex;
   align-items: center;
@@ -775,6 +904,64 @@ textarea:focus {
 
 .table tbody tr:hover {
   background: #f9fbff;
+}
+
+.orders-metrics-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.orders-metric {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.orders-metric h3 {
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.orders-metric__label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.orders-metric__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.orders-create__header {
+  margin-bottom: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.variant-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.variant-new {
+  color: #0e4f57;
+  background: #daf7fb;
+}
+
+.variant-old {
+  color: #3c4872;
+  background: #e5ebff;
 }
 
 .error {
@@ -1195,6 +1382,14 @@ textarea:focus {
   border-radius: inherit;
 }
 
+.glow-panel-card {
+  border-radius: var(--radius-lg);
+}
+
+.glow-panel-card > .card {
+  height: 100%;
+}
+
 .glow-panel::before,
 .glow-panel::after {
   content: "";
@@ -1388,6 +1583,16 @@ textarea:focus {
 
   .page-header__title {
     font-size: 26px;
+  }
+
+  .overview-hero {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-4);
+  }
+
+  .overview-hero__status {
+    justify-items: start;
   }
 
   .card {

@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { Flag, PackagePlus, RefreshCcw, ShoppingCart } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { ConfirmDialog } from "../../components/ui/confirm-dialog";
 import { DataTableShell } from "../../components/ui/data-table-shell";
+import { GlowPanel } from "../../components/ui/glow-panel";
 import { PageHeader } from "../../components/ui/page-header";
 import { StatusBadge } from "../../components/ui/status-badge";
 import { ErrorState, EmptyState, LoadingSkeleton } from "../../components/ui/states";
@@ -87,6 +89,25 @@ export default function OrdersPage() {
     });
   }, [orders, search, statusFilter]);
 
+  const summary = useMemo(() => {
+    const counts = {
+      total: orders.length,
+      sent: 0,
+      pending: 0,
+      retrying: 0,
+      failed: 0,
+    };
+
+    for (const order of orders) {
+      if (order.notification_status === "sent") counts.sent += 1;
+      if (order.notification_status === "pending") counts.pending += 1;
+      if (order.notification_status === "retrying") counts.retrying += 1;
+      if (order.notification_status === "failed") counts.failed += 1;
+    }
+
+    return counts;
+  }, [orders]);
+
   const handleCreateOrder = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -147,11 +168,14 @@ export default function OrdersPage() {
   return (
     <main className="page">
       <PageHeader
+        eyebrow="Commerce"
+        icon={<ShoppingCart size={18} aria-hidden />}
         title="Orders"
-        description="Create customer orders, inspect checkout variants, and monitor notification delivery."
+        description="Create orders, inspect checkout variants, and monitor notification delivery states."
         actions={
           <div className="actions">
             <Link href="/flags" className="button button-secondary">
+              <Flag size={15} aria-hidden />
               Manage Flags
             </Link>
             <Link href="/audit" className="button button-secondary">
@@ -161,38 +185,79 @@ export default function OrdersPage() {
         }
       />
 
-      <section className="card">
-        <h3>Create Order</h3>
-        <form className="form split-form" onSubmit={handleCreateOrder}>
-          <label className="field">
-            <span>Item Name</span>
-            <input
-              type="text"
-              value={itemName}
-              onChange={(event) => setItemName(event.target.value)}
-              required
-              minLength={1}
-            />
-          </label>
-
-          <label className="field">
-            <span>Quantity</span>
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(event) => setQuantity(event.target.value)}
-              required
-            />
-          </label>
-
-          <div className="actions split-form__actions">
-            <button type="submit" className="button" disabled={creating}>
-              {creating ? "Creating..." : "Create Order"}
-            </button>
-          </div>
-        </form>
+      <section className="orders-metrics-grid">
+        <GlowPanel className="glow-panel-card">
+          <article className="card orders-metric">
+            <p className="orders-metric__label">Total orders</p>
+            <h3>{summary.total}</h3>
+            <p>All created orders</p>
+          </article>
+        </GlowPanel>
+        <GlowPanel className="glow-panel-card">
+          <article className="card orders-metric">
+            <p className="orders-metric__label">Sent notifications</p>
+            <h3>{summary.sent}</h3>
+            <StatusBadge status="sent" />
+          </article>
+        </GlowPanel>
+        <GlowPanel className="glow-panel-card">
+          <article className="card orders-metric">
+            <p className="orders-metric__label">Retrying / pending</p>
+            <h3>{summary.pending + summary.retrying}</h3>
+            <div className="orders-metric__status-row">
+              <StatusBadge status="pending" />
+              <StatusBadge status="retrying" />
+            </div>
+          </article>
+        </GlowPanel>
+        <GlowPanel className="glow-panel-card">
+          <article className="card orders-metric">
+            <p className="orders-metric__label">Failed notifications</p>
+            <h3>{summary.failed}</h3>
+            <StatusBadge status="failed" />
+          </article>
+        </GlowPanel>
       </section>
+
+      <GlowPanel className="glow-panel-card">
+        <section className="card">
+          <div className="orders-create__header">
+            <h3>Create Order</h3>
+            <p>New orders trigger feature-flag evaluation and notification workflow events.</p>
+          </div>
+          <form className="form split-form" onSubmit={handleCreateOrder}>
+            <label className="field">
+              <span>Item Name</span>
+              <input
+                type="text"
+                value={itemName}
+                onChange={(event) => setItemName(event.target.value)}
+                required
+                minLength={1}
+                placeholder="Starter Plan"
+              />
+            </label>
+
+            <label className="field">
+              <span>Quantity</span>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+                required
+              />
+            </label>
+
+            <div className="actions split-form__actions">
+              <button type="submit" className="button" disabled={creating}>
+                <PackagePlus size={16} aria-hidden />
+                {creating ? "Creating..." : "Create Order"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </GlowPanel>
 
       {loading ? <LoadingSkeleton title="Loading orders" lines={6} /> : null}
 
@@ -214,6 +279,7 @@ export default function OrdersPage() {
       {!loading && !error ? (
         <DataTableShell
           title="Order List"
+          description="Includes checkout variant and worker notification metadata for each order."
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search by item or order ID"
@@ -262,7 +328,11 @@ export default function OrdersPage() {
                       <div className="muted">{order.id}</div>
                     </td>
                     <td>{order.quantity}</td>
-                    <td>{order.checkout_variant}</td>
+                    <td>
+                      <span className={`variant-chip variant-${order.checkout_variant}`}>
+                        {order.checkout_variant}
+                      </span>
+                    </td>
                     <td>
                       <StatusBadge status={order.notification_status} />
                     </td>
@@ -279,6 +349,7 @@ export default function OrdersPage() {
                           onClick={() => setRetryCandidate(order)}
                           disabled={retryingOrderId === order.id}
                         >
+                          <RefreshCcw size={13} aria-hidden />
                           {retryingOrderId === order.id ? "Retrying..." : "Retry"}
                         </button>
                       ) : (

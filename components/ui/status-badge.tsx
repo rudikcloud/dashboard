@@ -9,30 +9,34 @@ type StatusTone =
   | "offline"
   | "unknown";
 
-const STATUS_TONES: Record<string, StatusTone> = {
-  pending: "pending",
-  retrying: "retrying",
-  sent: "sent",
-  failed: "failed",
-  enabled: "enabled",
-  disabled: "disabled",
-  healthy: "healthy",
-  offline: "offline",
+const STATUS_TONES: Record<string, { tone: StatusTone; label?: string }> = {
+  pending: { tone: "pending" },
+  retrying: { tone: "retrying" },
+  sent: { tone: "sent" },
+  failed: { tone: "failed" },
+  enabled: { tone: "enabled" },
+  disabled: { tone: "disabled" },
+  healthy: { tone: "healthy" },
+  offline: { tone: "offline" },
+  degraded: { tone: "retrying", label: "degraded" },
+  syncing: { tone: "pending", label: "syncing" },
+  requires_auth: { tone: "pending", label: "auth required" },
 };
 
 function normalizeStatus(value: string): { tone: StatusTone; label: string } {
   const normalized = value.trim().toLowerCase().replace(/\s+/g, "_");
-  const tone = STATUS_TONES[normalized] ?? "unknown";
-  if (tone === "unknown") {
+  const mapped = STATUS_TONES[normalized];
+
+  if (!mapped) {
     return {
-      tone,
+      tone: "unknown",
       label: value,
     };
   }
 
   return {
-    tone,
-    label: normalized.replace(/_/g, " "),
+    tone: mapped.tone,
+    label: mapped.label ?? normalized.replace(/_/g, " "),
   };
 }
 
