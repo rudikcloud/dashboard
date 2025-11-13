@@ -1,11 +1,13 @@
 "use client";
 
-import { Plus, Save } from "lucide-react";
+import { Flag, Plus, Save, SlidersHorizontal } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { DataTableShell } from "../../components/ui/data-table-shell";
+import { GlowPanel } from "../../components/ui/glow-panel";
 import { PageHeader } from "../../components/ui/page-header";
 import { EmptyState, ErrorState, LoadingSkeleton } from "../../components/ui/states";
+import { StatusBadge } from "../../components/ui/status-badge";
 import { useToast } from "../../components/ui/toast";
 import {
   createFlag,
@@ -49,6 +51,12 @@ function buildEditDraft(flag: FeatureFlag): FlagDraft {
     rolloutPercent: flag.rollout_percent,
     allowlistText: flag.allowlist.join("\n"),
   };
+}
+
+function rolloutLabel(value: number): string {
+  if (value === 0) return "off";
+  if (value === 100) return "full";
+  return "partial";
 }
 
 export default function FlagsPage() {
@@ -101,6 +109,21 @@ export default function FlagsPage() {
       );
     });
   }, [flags, search]);
+
+  const summary = useMemo(() => {
+    const enabled = flags.filter((flag) => flag.enabled).length;
+    const allowlisted = flags.filter((flag) => flag.allowlist.length > 0).length;
+    const partialRollout = flags.filter(
+      (flag) => flag.rollout_percent > 0 && flag.rollout_percent < 100,
+    ).length;
+
+    return {
+      total: flags.length,
+      enabled,
+      allowlisted,
+      partialRollout,
+    };
+  }, [flags]);
 
   const openCreateDialog = () => {
     setFormError(null);
@@ -161,7 +184,7 @@ export default function FlagsPage() {
 
       if (message.toLowerCase().includes("already exists")) {
         setFormError(
-          "A flag with this key already exists in this environment. Select it from the list and edit it.",
+          "A flag with this key already exists in this environment. Open that row and use Edit.",
         );
       } else {
         setFormError("Unable to create flag. Please review your input and try again.");
@@ -207,8 +230,10 @@ export default function FlagsPage() {
   return (
     <main className="page">
       <PageHeader
+        eyebrow="Progressive Delivery"
+        icon={<Flag size={18} aria-hidden />}
         title="Feature Flags"
-        description="Manage targeted rollouts using enabled state, allowlists, and percentage-based exposure."
+        description="Manage rollout behavior with enabled state, percentage exposure, and optional allowlists."
         actions={
           <button type="button" className="button" onClick={openCreateDialog}>
             <Plus size={16} aria-hidden />
@@ -217,6 +242,37 @@ export default function FlagsPage() {
         }
         meta={<span className="pill">Environment: {ENVIRONMENT}</span>}
       />
+
+      <section className="flags-metrics-grid">
+        <GlowPanel className="glow-panel-card">
+          <article className="card flags-metric">
+            <p className="flags-metric__label">Total flags</p>
+            <h3>{summary.total}</h3>
+            <p>Configured for {ENVIRONMENT}</p>
+          </article>
+        </GlowPanel>
+        <GlowPanel className="glow-panel-card">
+          <article className="card flags-metric">
+            <p className="flags-metric__label">Enabled</p>
+            <h3>{summary.enabled}</h3>
+            <StatusBadge status="enabled" />
+          </article>
+        </GlowPanel>
+        <GlowPanel className="glow-panel-card">
+          <article className="card flags-metric">
+            <p className="flags-metric__label">Partial rollout</p>
+            <h3>{summary.partialRollout}</h3>
+            <p>0% &lt; rollout &lt; 100%</p>
+          </article>
+        </GlowPanel>
+        <GlowPanel className="glow-panel-card">
+          <article className="card flags-metric">
+            <p className="flags-metric__label">Allowlisted</p>
+            <h3>{summary.allowlisted}</h3>
+            <p>User-targeted flags</p>
+          </article>
+        </GlowPanel>
+      </section>
 
       {loading ? <LoadingSkeleton title="Loading feature flags" lines={6} /> : null}
 
@@ -238,9 +294,10 @@ export default function FlagsPage() {
       {!loading && !error ? (
         <DataTableShell
           title="Flags"
+          description="Create, update, and inspect rollout settings for each flag key."
           searchValue={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search flags"
+          searchPlaceholder="Search by key or description"
           pagination={<p>{filteredFlags.length} flags</p>}
         >
           {filteredFlags.length === 0 ? (
@@ -259,8 +316,8 @@ export default function FlagsPage() {
                 <tr>
                   <th>Key</th>
                   <th>Description</th>
-                  <th>Enabled</th>
-                  <th>Rollout %</th>
+                  <th>Status</th>
+                  <th>Rollout</th>
                   <th>Allowlist</th>
                   <th>Actions</th>
                 </tr>
@@ -274,16 +331,36 @@ export default function FlagsPage() {
                     </td>
                     <td>{flag.description || "-"}</td>
                     <td>
-                      <span
-                        className={`health-indicator ${
-                          flag.enabled ? "health-healthy" : "health-offline"
-                        }`}
-                      >
-                        {flag.enabled ? "Enabled" : "Disabled"}
-                      </span>
+                      <StatusBadge status={flag.enabled ? "enabled" : "disabled"} />
                     </td>
-                    <td>{flag.rollout_percent}%</td>
-                    <td>{flag.allowlist.length ? flag.allowlist.length : "-"}</td>
+                    <td>
+                      <div className="rollout-meter">
+                        <span
+                          className="rollout-meter__fill"
+                          style={{ width: `${flag.rollout_percent}%` }}
+                          aria-hidden
+                        />
+                      </div>
+                      <div className="muted">
+                        {flag.rollout_percent}% ({rolloutLabel(flag.rollout_percent)})
+                      </div>
+                    </td>
+                    <td>
+                      {flag.allowlist.length === 0 ? (
+                        <span className="muted">-</span>
+                      ) : (
+                        <div className="allowlist-tags">
+                          {flag.allowlist.slice(0, 3).map((entry) => (
+                            <span key={entry} className="allowlist-tag">
+                              {entry}
+                            </span>
+                          ))}
+                          {flag.allowlist.length > 3 ? (
+                            <span className="allowlist-tag">+{flag.allowlist.length - 3}</span>
+                          ) : null}
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <button
                         type="button"
@@ -305,6 +382,9 @@ export default function FlagsPage() {
         <div className="dialog-overlay" role="presentation">
           <div className="dialog dialog-wide" role="dialog" aria-modal="true">
             <div className="dialog__header">
+              <div className="dialog__icon" aria-hidden>
+                <SlidersHorizontal size={16} />
+              </div>
               <h3>Create Feature Flag</h3>
             </div>
 
@@ -375,7 +455,7 @@ export default function FlagsPage() {
                   onChange={(event) =>
                     setDraft({ ...draft, allowlistText: event.target.value })
                   }
-                  placeholder="user@example.com"
+                  placeholder="vip@example.com"
                 />
               </label>
 
@@ -398,6 +478,9 @@ export default function FlagsPage() {
         <div className="dialog-overlay" role="presentation">
           <div className="dialog dialog-wide" role="dialog" aria-modal="true">
             <div className="dialog__header">
+              <div className="dialog__icon" aria-hidden>
+                <SlidersHorizontal size={16} />
+              </div>
               <h3>Edit {editTarget.key}</h3>
             </div>
 

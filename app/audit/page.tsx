@@ -1,11 +1,13 @@
 "use client";
 
-import { Eye } from "lucide-react";
+import { Eye, FileSearch, ShieldCheck } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { DataTableShell } from "../../components/ui/data-table-shell";
+import { GlowPanel } from "../../components/ui/glow-panel";
 import { PageHeader } from "../../components/ui/page-header";
 import { EmptyState, ErrorState, LoadingSkeleton } from "../../components/ui/states";
+import { StatusBadge } from "../../components/ui/status-badge";
 import { useToast } from "../../components/ui/toast";
 import {
   getAuditEvent,
@@ -31,6 +33,16 @@ function formatDate(value: string): string {
     return value;
   }
   return parsed.toLocaleString();
+}
+
+function isWriteAction(actionType: string): boolean {
+  const normalized = actionType.toLowerCase();
+  return (
+    normalized.includes("create") ||
+    normalized.includes("update") ||
+    normalized.includes("delete") ||
+    normalized.includes("login")
+  );
 }
 
 export default function AuditPage() {
@@ -111,6 +123,11 @@ export default function AuditPage() {
     });
   }, [events, search]);
 
+  const writeEventsCount = useMemo(
+    () => filteredEvents.filter((event) => isWriteAction(event.action_type)).length,
+    [filteredEvents],
+  );
+
   const handleFilterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await loadEvents();
@@ -135,60 +152,70 @@ export default function AuditPage() {
   return (
     <main className="page">
       <PageHeader
+        eyebrow="Compliance"
+        icon={<ShieldCheck size={18} aria-hidden />}
         title="Audit Logs"
-        description="Search and inspect immutable audit events across platform actions."
+        description="Search and inspect immutable platform events by actor, action, resource, and timestamp."
+        meta={
+          <>
+            <span className="pill">Events: {filteredEvents.length}</span>
+            <span className="pill">Write actions: {writeEventsCount}</span>
+          </>
+        }
       />
 
-      <section className="card">
-        <h3>Filters</h3>
-        <form className="form filter-grid" onSubmit={handleFilterSubmit}>
-          <label className="field">
-            <span>Action Type</span>
-            <input
-              type="text"
-              value={actionType}
-              onChange={(event) => setActionType(event.target.value)}
-              placeholder="FLAG_UPDATED"
-            />
-          </label>
+      <GlowPanel className="glow-panel-card">
+        <section className="card">
+          <h3>Filters</h3>
+          <form className="form filter-grid" onSubmit={handleFilterSubmit}>
+            <label className="field">
+              <span>Action Type</span>
+              <input
+                type="text"
+                value={actionType}
+                onChange={(event) => setActionType(event.target.value)}
+                placeholder="FLAG_UPDATED"
+              />
+            </label>
 
-          <label className="field">
-            <span>Resource Type</span>
-            <input
-              type="text"
-              value={resourceType}
-              onChange={(event) => setResourceType(event.target.value)}
-              placeholder="FLAG"
-            />
-          </label>
+            <label className="field">
+              <span>Resource Type</span>
+              <input
+                type="text"
+                value={resourceType}
+                onChange={(event) => setResourceType(event.target.value)}
+                placeholder="FLAG"
+              />
+            </label>
 
-          <label className="field">
-            <span>From (ISO timestamp)</span>
-            <input
-              type="text"
-              value={from}
-              onChange={(event) => setFrom(event.target.value)}
-              placeholder="2026-03-10T00:00:00Z"
-            />
-          </label>
+            <label className="field">
+              <span>From (ISO timestamp)</span>
+              <input
+                type="text"
+                value={from}
+                onChange={(event) => setFrom(event.target.value)}
+                placeholder="2026-03-10T00:00:00Z"
+              />
+            </label>
 
-          <label className="field">
-            <span>To (ISO timestamp)</span>
-            <input
-              type="text"
-              value={to}
-              onChange={(event) => setTo(event.target.value)}
-              placeholder="2026-03-11T00:00:00Z"
-            />
-          </label>
+            <label className="field">
+              <span>To (ISO timestamp)</span>
+              <input
+                type="text"
+                value={to}
+                onChange={(event) => setTo(event.target.value)}
+                placeholder="2026-03-11T00:00:00Z"
+              />
+            </label>
 
-          <div className="actions filter-grid__actions">
-            <button className="button" type="submit">
-              Apply Filters
-            </button>
-          </div>
-        </form>
-      </section>
+            <div className="actions filter-grid__actions">
+              <button className="button" type="submit">
+                Apply Filters
+              </button>
+            </div>
+          </form>
+        </section>
+      </GlowPanel>
 
       {loading ? <LoadingSkeleton title="Loading audit logs" lines={6} /> : null}
 
@@ -210,6 +237,7 @@ export default function AuditPage() {
       {!loading && !error ? (
         <DataTableShell
           title="Events"
+          description="Filtered audit trail with quick access to before/after payload details."
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search by action, resource, actor, or id"
@@ -235,9 +263,16 @@ export default function AuditPage() {
                 {filteredEvents.map((auditEvent) => (
                   <tr key={auditEvent.id}>
                     <td>{formatDate(auditEvent.created_at)}</td>
-                    <td>{auditEvent.action_type}</td>
                     <td>
-                      {auditEvent.resource_type}
+                      <div className="audit-action-cell">
+                        <StatusBadge
+                          status={isWriteAction(auditEvent.action_type) ? "enabled" : "pending"}
+                        />
+                        <span>{auditEvent.action_type}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>{auditEvent.resource_type}</strong>
                       {auditEvent.resource_id ? (
                         <div className="muted">{auditEvent.resource_id}</div>
                       ) : null}
@@ -267,6 +302,9 @@ export default function AuditPage() {
         <div className="dialog-overlay" role="presentation">
           <div className="dialog dialog-xwide" role="dialog" aria-modal="true">
             <div className="dialog__header">
+              <div className="dialog__icon" aria-hidden>
+                <FileSearch size={16} />
+              </div>
               <h3>Audit Event Details</h3>
             </div>
 
