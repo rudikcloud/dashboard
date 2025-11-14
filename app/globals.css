@@ -369,6 +369,17 @@ p {
   z-index: 1;
 }
 
+.auth-card {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.auth-card__footer {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .page {
   width: min(1220px, 100%);
   margin: 0 auto;
@@ -1396,6 +1407,11 @@ textarea:focus {
   gap: var(--space-3);
 }
 
+.control-card.is-active {
+  border-color: #8db5e7;
+  background: linear-gradient(180deg, #fafdff 0%, #eef7ff 100%);
+}
+
 .control-card__head {
   display: flex;
   align-items: center;
@@ -1423,6 +1439,19 @@ textarea:focus {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-4);
+}
+
+.demo-current-state {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.demo-current-state__badge-wrap {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2);
 }
 
 .history-list {
@@ -1656,6 +1685,15 @@ textarea:focus {
   }
 
   .overview-hero__status {
+    justify-items: start;
+  }
+
+  .demo-current-state {
+    display: grid;
+    justify-items: start;
+  }
+
+  .demo-current-state__badge-wrap {
     justify-items: start;
   }
 

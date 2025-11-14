@@ -1,10 +1,12 @@
 "use client";
 
-import { Gauge, RotateCcw, TriangleAlert, Zap } from "lucide-react";
+import { Gauge, RotateCcw, SlidersHorizontal, TriangleAlert, Zap } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ConfirmDialog } from "../../components/ui/confirm-dialog";
+import { GlowPanel } from "../../components/ui/glow-panel";
 import { PageHeader } from "../../components/ui/page-header";
+import { StatusBadge } from "../../components/ui/status-badge";
 import { useToast } from "../../components/ui/toast";
 
 type DemoMode = "normal" | "latency" | "error_storm";
@@ -23,7 +25,7 @@ const presets: Preset[] = [
     id: "latency",
     label: "Latency Spike",
     description: "Simulate delayed processing and slower service responses.",
-    impact: "Use this to demonstrate degraded user experience and tracing depth.",
+    impact: "Use this to demonstrate degraded UX and deeper traces.",
     icon: Gauge,
     buttonLabel: "Apply Latency",
   },
@@ -46,9 +48,15 @@ const presets: Preset[] = [
 ];
 
 function modeText(mode: DemoMode): string {
-  if (mode === "latency") return "Latency preset active";
-  if (mode === "error_storm") return "Error storm preset active";
-  return "Normal operation";
+  if (mode === "latency") return "latency active";
+  if (mode === "error_storm") return "error storm active";
+  return "normal operation";
+}
+
+function statusForMode(mode: DemoMode): string {
+  if (mode === "error_storm") return "failed";
+  if (mode === "latency") return "retrying";
+  return "healthy";
 }
 
 export default function DemoPage() {
@@ -68,14 +76,12 @@ export default function DemoPage() {
     setMode(preset.id);
     const now = new Date().toLocaleString();
     setLastUpdatedAt(now);
-    setHistory((previous) => [
-      `${now} • ${preset.label}`,
-      ...previous.slice(0, 7),
-    ]);
+    setHistory((previous) => [`${now} • ${preset.label}`, ...previous.slice(0, 7)]);
 
     showToast({
       title: `${preset.label} activated`,
-      description: "Update infra worker/env settings to run full backend injection.",
+      description: "Adjust infra worker/env settings to run full backend injection.",
+      variant: "info",
     });
   };
 
@@ -88,80 +94,98 @@ export default function DemoPage() {
     showToast({ title: "Recovery applied", description: "Demo controls reset to baseline." });
   };
 
-  const currentStateClass = useMemo(() => {
-    if (mode === "error_storm") return "health-offline";
-    if (mode === "latency") return "health-requires_auth";
-    return "health-healthy";
-  }, [mode]);
+  const activePreset = useMemo(
+    () => presets.find((preset) => preset.id === mode) ?? presets[2],
+    [mode],
+  );
 
   return (
     <main className="page">
       <PageHeader
+        eyebrow="Reliability"
+        icon={<SlidersHorizontal size={18} aria-hidden />}
         title="Demo Controls"
-        description="Coordinate scripted reliability demos with preset control states."
+        description="Coordinate reliability demos with preset state controls and clear operational feedback."
         meta={
-          <span className={`health-indicator ${currentStateClass}`}>
-            {modeText(mode)}
-          </span>
+          <>
+            <StatusBadge status={statusForMode(mode)} />
+            <span className="pill">{modeText(mode)}</span>
+          </>
         }
       />
+
+      <GlowPanel className="glow-panel-card">
+        <section className="card demo-current-state">
+          <div>
+            <h3>Current Demo State</h3>
+            <p className="muted">
+              Active preset: <strong>{activePreset.label}</strong>
+            </p>
+            <p>{lastUpdatedAt ? `Last updated: ${lastUpdatedAt}` : "No preset applied yet."}</p>
+          </div>
+          <div className="demo-current-state__badge-wrap">
+            <StatusBadge status={statusForMode(mode)} />
+            <p className="muted">{modeText(mode)}</p>
+          </div>
+        </section>
+      </GlowPanel>
 
       <section className="control-grid">
         {presets.map((preset) => {
           const Icon = preset.icon;
+          const isActive = mode === preset.id;
+
           return (
-            <article key={preset.id} className="card control-card">
-              <div className="control-card__head">
-                <div className="control-card__icon">
-                  <Icon size={18} aria-hidden />
+            <GlowPanel key={preset.id} className="glow-panel-card">
+              <article className={`card control-card${isActive ? " is-active" : ""}`}>
+                <div className="control-card__head">
+                  <div className="control-card__icon">
+                    <Icon size={18} aria-hidden />
+                  </div>
+                  <h3>{preset.label}</h3>
                 </div>
-                <h3>{preset.label}</h3>
-              </div>
-              <p>{preset.description}</p>
-              <p className="muted">{preset.impact}</p>
-              <div className="actions">
-                <button
-                  type="button"
-                  className="button"
-                  onClick={() => applyPreset(preset)}
-                  aria-label={`Apply ${preset.label} preset`}
-                >
-                  {preset.buttonLabel}
-                </button>
-              </div>
-            </article>
+                <p>{preset.description}</p>
+                <p className="muted">{preset.impact}</p>
+                <div className="actions">
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={() => applyPreset(preset)}
+                    aria-label={`Apply ${preset.label} preset`}
+                  >
+                    {preset.buttonLabel}
+                  </button>
+                </div>
+              </article>
+            </GlowPanel>
           );
         })}
       </section>
 
-      <section className="card demo-state-grid">
-        <article>
-          <h3>Current State</h3>
-          <p className="muted">{modeText(mode)}</p>
-          <p>{lastUpdatedAt ? `Last updated: ${lastUpdatedAt}` : "No preset applied yet."}</p>
-        </article>
+      <GlowPanel className="glow-panel-card">
+        <section className="card demo-state-grid">
+          <article>
+            <h3>Runbook Notes</h3>
+            <p>
+              Combine this panel with infrastructure env toggles to demonstrate retries,
+              failures, recovery, and observability behavior.
+            </p>
+          </article>
 
-        <article>
-          <h3>Runbook Notes</h3>
-          <p>
-            Combine this panel with infrastructure toggles to demonstrate retries,
-            failures, recovery, and observability behavior.
-          </p>
-        </article>
-      </section>
-
-      <section className="card">
-        <h3>Recent Preset Changes</h3>
-        {history.length === 0 ? (
-          <p>No actions yet.</p>
-        ) : (
-          <ul className="history-list">
-            {history.map((entry) => (
-              <li key={entry}>{entry}</li>
-            ))}
-          </ul>
-        )}
-      </section>
+          <article>
+            <h3>Recent Preset Changes</h3>
+            {history.length === 0 ? (
+              <p>No actions yet.</p>
+            ) : (
+              <ul className="history-list">
+                {history.map((entry) => (
+                  <li key={entry}>{entry}</li>
+                ))}
+              </ul>
+            )}
+          </article>
+        </section>
+      </GlowPanel>
 
       <ConfirmDialog
         open={Boolean(pendingPreset)}
