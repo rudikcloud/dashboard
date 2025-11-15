@@ -269,10 +269,6 @@ export function AppShell({ children }: AppShellProps) {
             </div>
           ))}
         </nav>
-
-        <div className="app-sidebar__footer">
-          <span className="app-sidebar__footer-label">Local Development</span>
-        </div>
       </aside>
 
       {mobileOpen ? (
