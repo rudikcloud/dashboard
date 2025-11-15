@@ -239,6 +239,7 @@ export default function Home() {
         <section className="overview-grid">
           {services.map((service) => {
             const Icon = SERVICE_ICON[service.id];
+            const isExternal = service.href.startsWith("http://") || service.href.startsWith("https://");
 
             return (
               <GlowPanel key={service.name} className="glow-panel-card">
@@ -254,10 +255,22 @@ export default function Home() {
                     <p>{service.detail}</p>
                   </div>
                   <div className="overview-service__footer">
-                    <Link href={service.href} className="button button-secondary button-compact">
-                      Open
-                      <ArrowUpRight size={14} aria-hidden />
-                    </Link>
+                    {isExternal ? (
+                      <a
+                        href={service.href}
+                        className="button button-secondary button-compact"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open
+                        <ArrowUpRight size={14} aria-hidden />
+                      </a>
+                    ) : (
+                      <Link href={service.href} className="button button-secondary button-compact">
+                        Open
+                        <ArrowUpRight size={14} aria-hidden />
+                      </Link>
+                    )}
                   </div>
                 </article>
               </GlowPanel>

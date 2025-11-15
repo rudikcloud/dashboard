@@ -294,6 +294,12 @@ p {
   z-index: 2;
 }
 
+.app-sidebar__footer-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .app-main {
   min-width: 0;
   flex: 1;

@@ -1,16 +1,17 @@
 "use client";
 
 import { useRef } from "react";
+import type { PointerEvent, ReactNode } from "react";
 
 type GlowPanelProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 };
 
 export function GlowPanel({ children, className }: GlowPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const element = panelRef.current;
     if (!element) {
       return;
