@@ -307,6 +307,8 @@ p {
 }
 
 .app-topbar {
+  position: relative;
+  z-index: 40;
   height: 74px;
   border-bottom: 1px solid rgba(161, 180, 224, 0.45);
   background: linear-gradient(180deg, rgba(253, 254, 255, 0.86) 0%, rgba(245, 249, 255, 0.76) 100%);
@@ -344,6 +346,8 @@ p {
 }
 
 .app-content {
+  position: relative;
+  z-index: 1;
   padding: var(--space-8) clamp(18px, 2.8vw, 34px);
 }
 
@@ -1607,7 +1611,7 @@ textarea:focus {
   background: #ffffff;
   box-shadow: var(--shadow-md);
   padding: var(--space-2);
-  z-index: 25;
+  z-index: 90;
 }
 
 .user-menu__email {
