@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "build": "next build",
     "start": "next start"
   },
@@ -17,6 +19,8 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "eslint": "^9.20.1",
+    "eslint-config-next": "^15.0.0",
     "typescript": "^5.7.0"
   }
 }
