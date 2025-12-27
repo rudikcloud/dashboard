@@ -1,3 +1,5 @@
+[![CI](https://github.com/rudikcloud/dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/rudikcloud/dashboard/actions/workflows/ci.yml)
+
 # dashboard
 
 `dashboard` is the RudikCloud frontend (Next.js + TypeScript). It is the operator-facing UI for authentication, orders, flags, and audit logs.
