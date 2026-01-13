@@ -1020,6 +1020,62 @@ textarea:focus {
   gap: var(--space-1);
 }
 
+.incidents-presets {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.incidents-presets__header {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.incidents-presets__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.incidents-presets .button.is-active {
+  border-color: rgba(29, 78, 216, 0.45);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.16);
+}
+
+.incidents-form {
+  margin-top: var(--space-4);
+}
+
+.incidents-form__section {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background: linear-gradient(180deg, #fbfdff 0%, #f5f9ff 100%);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.incidents-form__section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: #1f3f7a;
+}
+
+.incidents-form__section-title h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.incidents-form__grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.incidents-form__actions {
+  justify-content: flex-end;
+}
+
 .variant-chip {
   display: inline-flex;
   align-items: center;
