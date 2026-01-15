@@ -149,6 +149,15 @@ const AUTH_FIELDS: FieldConfig[] = [
   { key: "auth_me_count", label: "Auth Count", min: 0, step: "1" },
 ];
 
+function formatPercent(value: number): string {
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function formatContribution(value: number): string {
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${value.toFixed(3)}`;
+}
+
 export default function IncidentsPage() {
   const { showToast } = useToast();
 
@@ -327,6 +336,85 @@ export default function IncidentsPage() {
               title="No analysis run yet"
               description="Use a preset or submit the manual payload to generate incident predictions."
             />
+          </section>
+        </GlowPanel>
+      ) : null}
+
+      {!loading && !error && result ? (
+        <GlowPanel className="glow-panel-card">
+          <section className="card incidents-results">
+            <div className="incidents-results__header">
+              <h3>Analysis Results</h3>
+              <p>Predicted incident profile, root-cause ranking, and feature evidence.</p>
+            </div>
+
+            <div className="incidents-results__grid">
+              <article className="incidents-result-card">
+                <p className="incidents-result-card__label">Incident Type</p>
+                <div className="incidents-result-card__headline">
+                  <span className="incident-type-chip">{result.incident_type.label}</span>
+                  <strong>{formatPercent(result.incident_type.confidence)}</strong>
+                </div>
+                <p className="muted">Model confidence for the incident type classification.</p>
+              </article>
+
+              <article className="incidents-result-card">
+                <p className="incidents-result-card__label">Root Cause Ranking</p>
+                <ul className="incident-ranking">
+                  {result.root_cause_ranking.map((entry, index) => (
+                    <li key={`${entry.service}-${index}`}>
+                      <div className="incident-ranking__top">
+                        <span className="incident-ranking__service">{entry.service}</span>
+                        <strong>{formatPercent(entry.confidence)}</strong>
+                      </div>
+                      <div
+                        className="incident-ranking__bar"
+                        role="progressbar"
+                        aria-label={`${entry.service} confidence`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(entry.confidence * 100)}
+                      >
+                        <span
+                          style={{
+                            width: `${Math.max(4, Math.min(100, entry.confidence * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+
+              <article className="incidents-result-card incidents-result-card-wide">
+                <p className="incidents-result-card__label">Evidence Summary</p>
+                <div className="incident-evidence-grid">
+                  <section className="incident-evidence-section">
+                    <h4>Root Cause Drivers</h4>
+                    <ul>
+                      {result.evidence.root_cause.map((item) => (
+                        <li key={`root-${item.feature}`}>
+                          <span>{item.feature}</span>
+                          <strong>{formatContribution(item.contribution)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <section className="incident-evidence-section">
+                    <h4>Incident Type Drivers</h4>
+                    <ul>
+                      {result.evidence.incident_type.map((item) => (
+                        <li key={`type-${item.feature}`}>
+                          <span>{item.feature}</span>
+                          <strong>{formatContribution(item.contribution)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </div>
+              </article>
+            </div>
           </section>
         </GlowPanel>
       ) : null}
