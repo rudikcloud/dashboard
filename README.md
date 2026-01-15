@@ -20,12 +20,14 @@
 - `/audit` : audit event search
 - `/audit/[id]` : audit event detail view
 - `/demo` : referenced demo path (use `/` as current live demo landing)
+- `/incidents` : AI-assisted incident analysis (manual payload + presets)
 
 ## Required Environment Variables
 
 Copy `.env.example` to `.env.local`.
 
 - `NEXT_PUBLIC_AUTH_BASE_URL`: Browser-facing auth-service URL.
+- `NEXT_PUBLIC_AI_BASE_URL`: Browser/server fallback URL for AI incident analysis service.
 - `ORDERS_SERVICE_URL`: Server-side orders-service base URL.
 - `FLAGS_SERVICE_URL`: Server-side flags-service base URL.
 - `AUDIT_SERVICE_URL`: Server-side audit-service-java base URL.
@@ -61,4 +63,5 @@ docker run --rm -p 3000:3000 --env-file .env.example dashboard
 2. Set `newCheckout` flag in `/flags`.
 3. Create order in `/orders`; verify checkout variant + notification status.
 4. Open `/audit`; show matching audit event and detail JSON.
-5. Open Grafana to connect UI actions to traces.
+5. Open `/incidents`; run a preset and review predicted type, ranking, and evidence.
+6. Open Grafana to connect UI actions to traces.
