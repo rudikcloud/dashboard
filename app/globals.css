@@ -55,7 +55,9 @@
 html,
 body {
   margin: 0;
+  height: 100%;
   min-height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -125,13 +127,15 @@ p {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100dvh;
   display: flex;
   position: relative;
+  overflow: hidden;
 }
 
 .app-sidebar {
   width: 292px;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background:
@@ -252,6 +256,8 @@ p {
 }
 
 .app-nav {
+  flex: 1;
+  min-height: 0;
   padding: var(--space-2) var(--space-3) var(--space-6);
   overflow-y: auto;
   position: relative;
@@ -358,13 +364,16 @@ p {
 
 .app-main {
   min-width: 0;
+  min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .app-topbar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 40;
   height: 74px;
   border-bottom: 1px solid rgba(161, 180, 224, 0.45);
@@ -403,6 +412,11 @@ p {
 }
 
 .app-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   position: relative;
   z-index: 1;
   padding: var(--space-8) clamp(18px, 2.8vw, 34px);
@@ -413,7 +427,9 @@ p {
 }
 
 .auth-layout {
-  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-y: auto;
   display: grid;
   place-items: center;
   padding: var(--space-8);
@@ -913,10 +929,46 @@ textarea:focus {
   transition: transform 120ms ease, box-shadow 130ms ease, border-color 130ms ease;
 }
 
+.icon-button svg {
+  color: currentColor;
+  transition: color 130ms ease;
+}
+
 .icon-button:hover {
   border-color: #9cb7ea;
   box-shadow: 0 8px 16px rgba(29, 78, 216, 0.16);
   transform: translateY(-1px);
+}
+
+.app-sidebar__collapse-toggle.icon-button {
+  border-color: rgba(178, 201, 236, 0.45);
+  background: linear-gradient(180deg, rgba(24, 50, 109, 0.92) 0%, rgba(16, 37, 85, 0.92) 100%);
+  color: #e8f1ff;
+  box-shadow: 0 10px 20px rgba(5, 13, 33, 0.32);
+}
+
+.app-sidebar__collapse-toggle.icon-button:hover {
+  background: linear-gradient(130deg, rgba(37, 99, 235, 0.95) 0%, rgba(14, 165, 183, 0.92) 100%);
+  border-color: rgba(189, 223, 255, 0.82);
+  color: #ffffff;
+  box-shadow: 0 14px 24px rgba(7, 24, 59, 0.44);
+}
+
+.app-sidebar__collapse-toggle.icon-button:focus-visible {
+  outline: 3px solid rgba(125, 211, 252, 0.46);
+  outline-offset: 2px;
+}
+
+.app-topbar__mobile-toggle.icon-button {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f6ff 100%);
+  border-color: #bfd0f2;
+  color: #173d86;
+}
+
+.app-topbar__mobile-toggle.icon-button:hover {
+  background: linear-gradient(180deg, #ebf3ff 0%, #ddeaff 100%);
+  border-color: #8daded;
+  color: #0f2f6b;
 }
 
 .data-table-shell {
@@ -1908,6 +1960,8 @@ textarea:focus {
 @media (max-width: 1080px) {
   .app-shell {
     display: block;
+    height: 100dvh;
+    overflow: hidden;
   }
 
   .app-sidebar {
